@@ -7,7 +7,7 @@ class GestorBaseDatosMySQL:
     Maneja el código, tipo de entrada, método, evento, área de acceso y estado.
     """
 
-    def __init__(self, host="localhost", user="root", password="Wilson07.", database="evento_concierto",
+    def __init__(self, host="localhost", user="root", password=".", database="evento_concierto",
                  port=3306):
         self.config = {
             'host': host,
@@ -127,7 +127,7 @@ if __name__ == "__main__":
     print("--- Probando Módulo MySQL con Requerimientos del Documento ---")
 
     #Recuerda colocar tu contraseña de MySQL
-    db = GestorBaseDatosMySQL(password="Wilson07.")
+    db = GestorBaseDatosMySQL(password=".")
 
     # 1. Probar consulta de entrada VIP Válida
     print("\n1. Probando entrada VIP por QR ('EVT123'):")
