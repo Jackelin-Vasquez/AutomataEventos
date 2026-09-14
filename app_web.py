@@ -1,3 +1,11 @@
+"""
+MÓDULO: Servidor Web Principal (API & Routing)
+    Punto de entrada de la aplicación Flask. Administra el enrutamiento web,
+    las vistas de usuario/administrador, los endpoints de la API REST para el
+    escáner QR, la generación e integración de boletos y la comunicación con
+    el simulador  del AFND.
+"""
+
 import os
 from flask import Flask, render_template_string, request, send_file, jsonify
 import base_datos
@@ -54,7 +62,7 @@ HTML_BOLETOS = """
                             </select>
                         </div>
                         <button type="submit" class="btn btn-primary w-100 font-weight-bold">
-                            📄 Guardar en BD y Descargar PDF
+                             Guardar en BD y Descargar PDF
                         </button>
                     </form>
                 </div>
@@ -79,7 +87,7 @@ HTML_BOLETOS = """
                             </tbody>
                         </table>
                     </div>
-                    <button onclick="cargarBoletos()" class="btn btn-sm btn-outline-secondary mt-2">🔄 Actualizar Tabla</button>
+                    <button onclick="cargarBoletos()" class="btn btn-sm btn-outline-secondary mt-2"> Actualizar Tabla</button>
                 </div>
             </div>
         </div>

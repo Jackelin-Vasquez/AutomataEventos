@@ -1,3 +1,12 @@
+"""
+MÓDULO: Gestor de Persistencia y Datos (Aiven MySQL)
+DESCRIPCIÓN:
+    Maneja la conexión segura con la base de datos MySQL alojada en la nube (Aiven).
+    Gestiona las tablas de 'eventos' y 'boletos', la verificación de estados
+    (válido vs. usado para prevención de fraude) y la traducción de los datos
+    del boleto a la cadena de símbolos requerida por el AFND.
+"""
+
 import os
 import mysql.connector
 from mysql.connector import Error

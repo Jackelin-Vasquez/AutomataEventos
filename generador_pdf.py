@@ -1,3 +1,10 @@
+"""
+MÓDULO: Generador de Tickets de Acceso (ReportLab PDF)
+    Encargado de la creación dinámica de archivos PDF en formato ticket (A6).
+    Renderiza la información relevante del asistente, tipo de entrada, evento
+    y dibuja vectorialmente el código QR único para su posterior escaneo.
+"""
+
 from reportlab.lib.pagesizes import A6, landscape
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors

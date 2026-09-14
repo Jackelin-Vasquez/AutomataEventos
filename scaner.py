@@ -1,5 +1,12 @@
 # escaner.py
 
+"""
+MÓDULO: Captura y Lectura de Código QR (HTML5 / WebCam)
+    Proporciona la interfaz y lógica JavaScript para acceder a la cámara
+    del dispositivo móvil o computadora. Captura el código QR en tiempo real,
+    descodifica su contenido y envía la petición de validación a la API.
+
+"""
 def obtener_html_escaner():
     """Retorna la interfaz web del escáner QR móvil integrada con HTML5-QRCode."""
     return """
@@ -19,7 +26,7 @@ def obtener_html_escaner():
     </head>
     <body class="p-3 text-center">
         <div class="container">
-            <h3 class="mb-3">📷 Escáner de Boletos QR</h3>
+            <h3 class="mb-3"> Escáner de Boletos QR</h3>
             <p class="text-muted">Apunta con la cámara trasera al código QR del boleto</p>
 
             <div id="reader"></div>
