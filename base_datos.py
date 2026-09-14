@@ -1,10 +1,9 @@
 """
-MÓDULO: Gestor de Persistencia y Datos (Aiven MySQL)
+MÓDULO: Gestor de Persistencia y Datos (Aiven MySQL / Local)
 DESCRIPCIÓN:
-    Maneja la conexión segura con la base de datos MySQL alojada en la nube (Aiven).
-    Gestiona las tablas de 'eventos' y 'boletos', la verificación de estados
-    (válido vs. usado para prevención de fraude) y la traducción de los datos
-    del boleto a la cadena de símbolos requerida por el AFND.
+    Maneja la conexión segura con la base de datos MySQL.
+    Gestiona la creación de eventos (incluyendo tipos de entrada y áreas)
+    y la emisión/validación de boletos para el AFND.
 """
 
 import os
@@ -15,12 +14,9 @@ from mysql.connector import Error
 class GestorBaseDatosMySQL:
     """
     Módulo de Lógica de Datos para EventAccess.
-    Maneja la persistencia en MySQL, la validación de boletos,
-    la creación de eventos y la traducción a cadenas para el AFND.
     """
 
     def __init__(self, host=None, user=None, password=None, database=None, port=None):
-        # Lee variables de entorno de Render/Aiven; si no existen, usa credenciales locales
         self.host = host or os.getenv("MYSQL_HOST", "localhost")
         self.user = user or os.getenv("MYSQL_USER", "root")
         self.password = password or os.getenv("MYSQL_PASSWORD", "Wilson07.")
@@ -35,11 +31,10 @@ class GestorBaseDatosMySQL:
             'port': self.port
         }
 
-        # Garantizar que el esquema y las tablas existan al instanciar
         self.inicializar_base_datos()
 
     def inicializar_base_datos(self):
-        """Crea la base de datos, sus tablas y datos base si no existen."""
+        """Crea la base de datos, sus tablas y migra columnas faltantes si ya existen."""
         try:
             conn = mysql.connector.connect(
                 host=self.host, user=self.user, password=self.password, port=self.port
@@ -55,16 +50,30 @@ class GestorBaseDatosMySQL:
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS eventos (
                         id_evento INT AUTO_INCREMENT PRIMARY KEY,
-                        nombre_evento VARCHAR(100) NOT NULL
+                        nombre_evento VARCHAR(100) NOT NULL,
+                        tipos_entrada VARCHAR(255) DEFAULT 'VIP,General',
+                        areas_acceso VARCHAR(255) DEFAULT 'Zona VIP,Zona General'
                     )
                 """)
+
+                # Migración: Agregar columnas si la tabla 'eventos' ya existía sin ellas
+                try:
+                    cursor.execute("ALTER TABLE eventos ADD COLUMN tipos_entrada VARCHAR(255) DEFAULT 'VIP,General'")
+                except Error:
+                    pass  # La columna ya existe
+
+                try:
+                    cursor.execute("ALTER TABLE eventos ADD COLUMN areas_acceso VARCHAR(255) DEFAULT 'Zona VIP,Zona General'")
+                except Error:
+                    pass  # La columna ya existe
+
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS boletos (
                         codigo VARCHAR(25) PRIMARY KEY,
-                        tipo_entrada VARCHAR(20) NOT NULL,
+                        tipo_entrada VARCHAR(50) NOT NULL,
                         metodo_validacion VARCHAR(20) NOT NULL,
                         id_evento INT NOT NULL,
-                        area_acceso VARCHAR(30) NOT NULL,
+                        area_acceso VARCHAR(50) NOT NULL,
                         estado VARCHAR(20) DEFAULT 'valida',
                         FOREIGN KEY (id_evento) REFERENCES eventos(id_evento) ON DELETE CASCADE
                     )
@@ -73,8 +82,10 @@ class GestorBaseDatosMySQL:
 
                 cursor.execute("SELECT COUNT(*) FROM eventos")
                 if cursor.fetchone()[0] == 0:
-                    cursor.execute(
-                        "INSERT INTO eventos (id_evento, nombre_evento) VALUES (1, 'Concierto Principal 2026')")
+                    cursor.execute("""
+                        INSERT INTO eventos (id_evento, nombre_evento, tipos_entrada, areas_acceso) 
+                        VALUES (1, 'Concierto Principal 2026', 'VIP,General', 'Zona VIP,Zona General')
+                    """)
                     cursor.execute("""
                         INSERT INTO boletos (codigo, tipo_entrada, metodo_validacion, id_evento, area_acceso, estado) VALUES
                         ('EVT123', 'VIP', 'QR', 1, 'Zona VIP', 'valida'),
@@ -96,6 +107,41 @@ class GestorBaseDatosMySQL:
             print(f"Error de conexión con MySQL: {e}")
             return None
 
+    def crear_evento(self, nombre_evento, tipos_entrada="VIP,General", areas_acceso="Zona VIP,Zona General"):
+        """Permite al Administrador registrar un nuevo evento con sus opciones."""
+        conexion = self.conectar()
+        if not conexion:
+            return False
+
+        try:
+            cursor = conexion.cursor()
+            query = """
+                INSERT INTO eventos (nombre_evento, tipos_entrada, areas_acceso)
+                VALUES (%s, %s, %s)
+            """
+            cursor.execute(query, (nombre_evento, tipos_entrada, areas_acceso))
+            conexion.commit()
+            cursor.close()
+            conexion.close()
+            print(f"[MySQL]: Nuevo evento '{nombre_evento}' registrado.")
+            return True
+        except Error as e:
+            print(f"Error al crear evento: {e}")
+            return False
+
+    def obtener_eventos(self):
+        """Retorna la lista de eventos disponibles con sus tipos y áreas."""
+        conexion = self.conectar()
+        if not conexion:
+            return []
+
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("SELECT id_evento, nombre_evento, tipos_entrada, areas_acceso FROM eventos")
+        eventos = cursor.fetchall()
+        cursor.close()
+        conexion.close()
+        return eventos
+
     def obtener_boletos_activos(self):
         """Retorna la lista de códigos de boletos registrados."""
         conexion = self.conectar()
@@ -110,11 +156,7 @@ class GestorBaseDatosMySQL:
         return [f[0] for f in filas]
 
     def consultar_y_generar_cadena(self, codigo_entrada):
-        """
-        1. Consulta la BD usando el código escaneado.
-        2. Verifica el estado ('valida' vs 'usada').
-        3. Traduce los atributos del boleto a la cadena de símbolos para el AFND.
-        """
+        """Genera la cadena para el AFND en base a la información del boleto."""
         conexion = self.conectar()
         if not conexion:
             return "qqe", "ERROR: Sin conexión a MySQL"
@@ -157,13 +199,11 @@ class GestorBaseDatosMySQL:
         return cadena_afnd, mensaje
 
     def consultar_desde_qr(self, texto_raw_qr):
-        """Punto de entrada directo para el escáner OpenCV."""
         if not texto_raw_qr:
             return "qqe", "Error: Lectura QR vacía."
         return self.consultar_y_generar_cadena(str(texto_raw_qr).strip())
 
     def marcar_como_usada(self, codigo_entrada):
-        """Inactiva la entrada actualizando estado = 'usada' en MySQL."""
         conexion = self.conectar()
         if not conexion:
             return False
@@ -174,80 +214,37 @@ class GestorBaseDatosMySQL:
             conexion.commit()
             cursor.close()
             conexion.close()
-            print(f"[MySQL]: La entrada '{codigo_entrada}' se actualizó a estado = 'usada'.")
+            print(f"[MySQL]: Entrada '{codigo_entrada}' actualizada a 'usada'.")
             return True
         except Error as e:
             print(f"Error al actualizar estado en MySQL: {e}")
             return False
 
-    def crear_evento(self, nombre_evento):
-        """Permite al Administrador registrar un nuevo evento."""
+    def registrar_o_actualizar_boleto(self, codigo, asistente, id_evento, tipo, metodo="QR", area="Zona VIP"):
         conexion = self.conectar()
         if not conexion:
             return False
-
         try:
             cursor = conexion.cursor()
-            cursor.execute("INSERT INTO eventos (nombre_evento) VALUES (%s)", (nombre_evento,))
-            conexion.commit()
-            cursor.close()
-            conexion.close()
-            print(f"➕ [MySQL]: Nuevo evento '{nombre_evento}' registrado.")
-            return True
-        except Error as e:
-            print(f"Error al crear evento: {e}")
-            return False
+            if isinstance(id_evento, str) and "#" in id_evento:
+                id_evento = int(id_evento.split("#")[-1])
 
-    def obtener_eventos(self):
-        """Retorna la lista de eventos disponibles."""
-        conexion = self.conectar()
-        if not conexion:
-            return []
-
-        cursor = conexion.cursor(dictionary=True)
-        cursor.execute("SELECT id_evento, nombre_evento FROM eventos")
-        eventos = cursor.fetchall()
-        cursor.close()
-        conexion.close()
-        return eventos
-
-    def registrar_boleto(self, codigo, tipo_entrada, metodo_validacion, id_evento, area_acceso):
-        """Permite al Administrador dar de alta un nuevo boleto."""
-        conexion = self.conectar()
-        if not conexion:
-            return False
-
-        try:
-            cursor = conexion.cursor()
             query = """
                 INSERT INTO boletos (codigo, tipo_entrada, metodo_validacion, id_evento, area_acceso, estado)
                 VALUES (%s, %s, %s, %s, %s, 'valida')
+                ON DUPLICATE KEY UPDATE 
+                    tipo_entrada=%s, metodo_validacion=%s, id_evento=%s, area_acceso=%s, estado='valida'
             """
-            cursor.execute(query, (codigo, tipo_entrada, metodo_validacion, id_evento, area_acceso))
+            cursor.execute(query, (codigo, tipo, metodo, int(id_evento), area, tipo, metodo, int(id_evento), area))
             conexion.commit()
             cursor.close()
             conexion.close()
-            print(f"➕ [MySQL]: Boleto '{codigo}' registrado exitosamente.")
             return True
         except Error as e:
-            print(f"Error al registrar boleto: {e}")
+            print(f"Error al registrar/actualizar boleto: {e}")
             return False
 
-    def reiniciar_boletos_prueba(self):
-        """Restaura todos los boletos a estado = 'valida'."""
-        conexion = self.conectar()
-        if not conexion:
-            return
-
-        cursor = conexion.cursor()
-        cursor.execute("UPDATE boletos SET estado = 'valida'")
-        conexion.commit()
-        cursor.close()
-        conexion.close()
-        print("[MySQL]: Todos los boletos han sido restaurados a 'valida'.")
-
     def obtener_todos_los_boletos(self):
-        """Retorna la lista de boletos con sus detalles para la tabla web."""
         conexion = self.conectar()
         if not conexion:
             return []
@@ -264,34 +261,38 @@ class GestorBaseDatosMySQL:
         conexion.close()
         return boletos
 
-    def registrar_o_actualizar_boleto(self, codigo, asistente, evento, tipo):
-        """Registra o actualiza un boleto emitido desde la web."""
-        conexion = self.conectar()
-        if not conexion:
-            return False
-        try:
-            cursor = conexion.cursor()
-            query = """
-                INSERT INTO boletos (codigo, tipo_entrada, metodo_validacion, id_evento, area_acceso, estado)
-                VALUES (%s, %s, 'QR', 1, %s, 'valida')
-                ON DUPLICATE KEY UPDATE tipo_entrada=%s, estado='valida'
-            """
-            cursor.execute(query, (codigo, tipo, f"Zona {tipo}", tipo))
-            conexion.commit()
-            cursor.close()
-            conexion.close()
-            return True
-        except Error as e:
-            print(f"Error al registrar/actualizar boleto: {e}")
-            return False
-
     def validar_y_cambiar_estado(self, codigo):
-        """Procesa la lectura desde el escáner web y actualiza la BD."""
         cadena_afnd, mensaje = self.consultar_y_generar_cadena(codigo)
         exito = "AUTORIZADO" in mensaje
         if exito:
             self.marcar_como_usada(codigo)
         return {"exito": exito, "mensaje": mensaje, "cadena": cadena_afnd}
+
+    def reiniciar_boletos_prueba(self):
+        conexion = self.conectar()
+        if not conexion:
+            return
+        cursor = conexion.cursor()
+        cursor.execute("UPDATE boletos SET estado = 'valida'")
+        conexion.commit()
+        cursor.close()
+        conexion.close()
+
+
+
+
+# --- INSTANCIA GLOBAL Y EXPOSICIÓN DE FUNCIONES ---
+db = GestorBaseDatosMySQL()
+
+crear_evento = db.crear_evento
+obtener_eventos = db.obtener_eventos
+obtener_todos_los_boletos = db.obtener_todos_los_boletos
+validar_y_cambiar_estado = db.validar_y_cambiar_estado
+registrar_o_actualizar_boleto = db.registrar_o_actualizar_boleto
+consultar_y_generar_cadena = db.consultar_y_generar_cadena
+marcar_como_usada = db.marcar_como_usada
+reiniciar_boletos_prueba = db.reiniciar_boletos_prueba
+
+
 if __name__ == "__main__":
-    db = GestorBaseDatosMySQL()
     print("Base de datos inicializada correctamente.")

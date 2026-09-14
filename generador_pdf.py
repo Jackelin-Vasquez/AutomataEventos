@@ -5,53 +5,55 @@ MÓDULO: Generador de Tickets de Acceso (ReportLab PDF)
     y dibuja vectorialmente el código QR único para su posterior escaneo.
 """
 
-from reportlab.lib.pagesizes import A6, landscape
+import os
+import qrcode
+from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
-from reportlab.graphics.shapes import Drawing
-from reportlab.graphics.barcode import qr
 
 
-def crear_pdf_boleto(codigo="EVT123", asistente="invitado", evento="Concierto Principal 2026", tipo="VIP", archivo_salida="Boleto_EVT123.pdf"):
-    """Genera un boleto PDF en formato ticket con código QR."""
-    ancho, alto = landscape(A6)
-    c = canvas.Canvas(archivo_salida, pagesize=landscape(A6))
+def crear_pdf_boleto(codigo, asistente, nombre_evento, tipo_entrada, ruta_salida):
+    """Genera un archivo PDF con formato de boleto y su código QR."""
+    # 1. Generar la imagen del QR temporal
+    qr_img = qrcode.make(codigo)
+    ruta_qr_temp = f"temp_qr_{codigo}.png"
+    qr_img.save(ruta_qr_temp)
+
+    # 2. Configurar el lienzo del PDF
+    c = canvas.Canvas(ruta_salida, pagesize=letter)
+    ancho, alto = letter
 
     # Encabezado
-    c.setFillColor(colors.HexColor("#1A252C"))
-    c.rect(0, alto - 45, ancho, 45, fill=1, stroke=0)
+    c.setFillColor(colors.HexColor("#0d6efd"))
+    c.rect(0, alto - 100, ancho, 100, fill=True, stroke=False)
+
     c.setFillColor(colors.white)
+    c.setFont("Helvetica-Bold", 24)
+    c.drawString(50, alto - 55, "TICKET DE ACCESO OFICIAL")
+    c.setFont("Helvetica", 12)
+    c.drawString(50, alto - 80, "EventAccess System - Control de Acceso Automático")
+
+    # Información del Boleto
+    c.setFillColor(colors.black)
     c.setFont("Helvetica-Bold", 14)
-    c.drawString(15, alto - 28, "🎟 EventAccess - TICKET OFICIAL")
+    c.drawString(50, alto - 150, f"Evento: {nombre_evento}")
 
-    # Detalles del boleto
-    c.setFillColor(colors.HexColor("#2C3E50"))
-    c.setFont("Helvetica-Bold", 12)
-    c.drawString(15, alto - 65, f"Evento: {evento}")
+    c.setFont("Helvetica", 12)
+    c.drawString(50, alto - 180, f"Código Único: {codigo}")
+    c.drawString(50, alto - 200, f"Comprador: {asistente}")
+    c.drawString(50, alto - 220, f"Tipo de Entrada: {tipo_entrada}")
+    c.drawString(50, alto - 240, f"Estado Inicial: VÁLIDA")
 
-    c.setFont("Helvetica", 10)
-    c.setFillColor(colors.HexColor("#333333"))
-    c.drawString(15, alto - 85, f"Asistente: {asistente}")
-    c.drawString(15, alto - 100, f"Tipo de Entrada: {tipo} | Área: Zona {tipo}")
-    c.drawString(15, alto - 115, f"Código de Boleto: {codigo}")
+    # Incrustar Imagen del Código QR
+    c.drawImage(ruta_qr_temp, 350, alto - 280, width=180, height=180)
 
-    c.setFont("Helvetica-Oblique", 8)
-    c.setFillColor(colors.HexColor("#7F8C8D"))
-    c.drawString(15, 20, "Presente este código QR en su celular el día del evento.")
-
-    # Código QR
-    qr_code = qr.QrCodeWidget(codigo)
-    bounds = qr_code.getBounds()
-    width = bounds[2] - bounds[0]
-    height = bounds[3] - bounds[1]
-
-    d = Drawing(105, 105, transform=[105.0 / width, 0, 0, 105.0 / height, 0, 0])
-    d.add(qr_code)
-    d.drawOn(c, ancho - 120, 25)
+    # Nota de pie de página
+    c.setFont("Helvetica-Oblique", 10)
+    c.setFillColor(colors.gray)
+    c.drawString(50, alto - 310, "Presente este código QR en la puerta de acceso.")
 
     c.save()
-    print(f"Boleto generado exitosamente: '{archivo_salida}'")
 
-
-if __name__ == "__main__":
-    crear_pdf_boleto()
+    # Limpiar la imagen QR temporal
+    if os.path.exists(ruta_qr_temp):
+        os.remove(ruta_qr_temp)

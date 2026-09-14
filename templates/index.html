@@ -1,6 +1,261 @@
-<!--
-VISTA: Panel Principal de Gestión y Emisión de Boletos
-    Interfaz de usuario para la emisión de nuevos boletos, registro de
-    asistentes en la base de datos y visualización del listado de boletos
-    activos registrados en la nube.
--->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EventAccess - Gestión y Emisión de Entradas</title>
+    <!-- Tailwind CSS desde CDN para estilos modernos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 font-sans">
+
+    <!-- Navegación Superior -->
+    <nav class="bg-blue-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-ticket text-2xl text-yellow-300"></i>
+                <span class="text-xl font-bold tracking-wide">EventAccess AFND</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="bg-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+    {{ session.get('nombre', 'Usuario') }} ({{ session.get('rol', '').upper() }})
+</span>
+                {% if session.get('rol') == 'admin' %}
+                <a href="/simulador" class="hover:bg-blue-700 px-3 py-1.5 rounded-lg text-sm font-semibold transition">
+    Simulador AFND
+</a>
+                {% endif %}
+                <a href="/escanear" class="hover:bg-blue-700 px-3 py-1.5 rounded-lg text-sm font-semibold transition">
+                     Escáner QR
+                </a>
+                <a href="/logout" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition">
+                    <i class="fa-solid fa-right-from-bracket"></i> Salir
+                </a>
+
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-12 gap-8">
+
+        <!-- Columna Izquierda: Formularios -->
+        <div class="md:col-span-5 flex flex-col gap-6">
+
+            {% if session.get('rol') == 'admin' %}
+            <!-- Tarjeta 1: Configurar Nuevo Evento (Solo Admin) -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-lg font-bold text-slate-800 mb-4">
+                    Configurar Nuevo Evento
+                </h2>
+                <form action="/crear_evento" method="POST" class="flex flex-col gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Nombre del Evento</label>
+                        <input type="text" name="nombre_evento" placeholder="Ej. Gala 2026 / Concierto Rock" required
+                            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Tipos de Entrada</label>
+                            <input type="text" name="tipos_entrada" placeholder="VIP,General" value="VIP,General" required
+                                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Áreas Autorizadas</label>
+                            <input type="text" name="areas_acceso" placeholder="Zona VIP,Zona General" value="Zona VIP,Zona General" required
+                                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none">
+                        </div>
+                    </div>
+                    <button type="submit" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition shadow">
+                        Guardar Evento
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+
+            <!-- Tarjeta 2: Emitir / Comprar Boleto -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-lg font-bold text-slate-800 mb-4">
+                    Emisión / Compra de Boletos
+                </h2>
+                <form action="/generar_boleto" method="POST" class="flex flex-col gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Seleccionar Evento</label>
+                        <select name="id_evento" id="select_evento_compra" required
+                            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none bg-slate-50">
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Tipo de Entrada</label>
+                            <select name="tipo" id="select_tipo_compra" required
+                                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none bg-slate-50">
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Área Autorizada</label>
+                            <select name="area" id="select_area_compra" required
+                                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none bg-slate-50">
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Código del Boleto</label>
+                            <input type="text" name="codigo" placeholder="Ej. EVT101" required
+                                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Método de Validación</label>
+                            <input type="text" name="metodo" value="QR" readonly
+                                class="w-full px-3 py-2 border rounded-lg bg-slate-100 text-slate-500 text-sm outline-none cursor-not-allowed">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Nombre del Titula de Compra</label>
+                        <input type="text" name="asistente" placeholder="Nombre Titular" required
+                            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none">
+                    </div>
+
+                    <button type="submit" class="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-4 rounded-lg text-sm transition shadow flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-file-pdf"></i> Generar Boleto PDF
+                    </button>
+                </form>
+            </div>
+
+        </div>
+
+        <!-- Columna Derecha: Listado de Boletos -->
+        <div class="md:col-span-7">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-slate-800">
+                        Registro General de Boletos
+                    </h2>
+                    <button onclick="cargarBoletos()" class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1">
+                        <i class="fa-solid fa-rotate"></i> Actualizar
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 uppercase text-xs">
+                                <th class="p-3 rounded-l-lg">Código</th>
+                                <th class="p-3">Evento</th>
+                                <th class="p-3">Tipo</th>
+                                <th class="p-3">Área</th>
+                                <th class="p-3 rounded-r-lg">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla_boletos" class="divide-y divide-slate-100">
+                            <!-- Se carga dinámicamente con JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Lógica conJavaScript Dinámica -->
+    <script>
+        let eventosCache = [];
+
+        // 1. Cargar eventos registrados e inicializar selectores
+        function cargarEventos() {
+            fetch('/api/eventos')
+                .then(res => res.json())
+                .then(data => {
+                    eventosCache = data;
+                    const selectEvento = document.getElementById('select_evento_compra');
+                    if (!selectEvento) return;
+
+                    selectEvento.innerHTML = '';
+
+                    if (data.length === 0) {
+                        selectEvento.innerHTML = `<option value="">No hay eventos configurados</option>`;
+                        return;
+                    }
+
+                    data.forEach(e => {
+                        selectEvento.innerHTML += `<option value="${e.id_evento}">${e.nombre_evento}</option>`;
+                    });
+
+                    // Cargar dinámicamente las opciones del primer evento obtenido
+                    actualizarOpcionesDeEvento(data[0].id_evento);
+                })
+                .catch(err => console.error("Error al cargar eventos:", err));
+        }
+
+        // 2. Escuchar cambios de selección en el selector de evento
+        document.getElementById('select_evento_compra')?.addEventListener('change', (e) => {
+            actualizarOpcionesDeEvento(e.target.value);
+        });
+
+        // 3. Actualizar tipos de entrada y áreas autorizadas en función del evento seleccionado
+        function actualizarOpcionesDeEvento(idEvento) {
+            const evento = eventosCache.find(e => e.id_evento == idEvento);
+            if (!evento) return;
+
+            const selectTipo = document.getElementById('select_tipo_compra');
+            const selectArea = document.getElementById('select_area_compra');
+
+            // Convertir cadenas separadas por coma en arreglos individuales
+            const tipos = evento.tipos_entrada ? evento.tipos_entrada.split(',') : ['VIP', 'General'];
+            const areas = evento.areas_acceso ? evento.areas_acceso.split(',') : ['Zona VIP', 'Zona General'];
+
+            selectTipo.innerHTML = tipos.map(t => `<option value="${t.trim()}">${t.trim()}</option>`).join('');
+            selectArea.innerHTML = areas.map(a => `<option value="${a.trim()}">${a.trim()}</option>`).join('');
+        }
+
+        // 4. Cargar tabla de boletos registrados desde la API
+        function cargarBoletos() {
+            fetch('/api/boletos')
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.getElementById('tabla_boletos');
+                    tbody.innerHTML = '';
+
+                    if (!data || data.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">No hay boletos registrados.</td></tr>`;
+                        return;
+                    }
+
+                    data.forEach(b => {
+                        const badgeColor = b.estado === 'valida'
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            : 'bg-red-100 text-red-800 border-red-300';
+
+                        const estadoTexto = b.estado === 'valida' ? 'VÁLIDA' : 'USADA';
+
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="p-3 font-semibold text-slate-700">${b.codigo}</td>
+                                <td class="p-3 text-slate-600">${b.evento}</td>
+                                <td class="p-3 text-slate-600">${b.tipo}</td>
+                                <td class="p-3 text-slate-600">${b.area_acceso}</td>
+                                <td class="p-3">
+                                    <span class="px-2.5 py-1 text-xs font-bold rounded-full border ${badgeColor}">
+                                        ${estadoTexto}
+                                    </span>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                })
+                .catch(err => console.error("Error al cargar boletos:", err));
+        }
+
+        // Ejecutar al cargar la página
+        document.addEventListener('DOMContentLoaded', () => {
+            cargarEventos();
+            cargarBoletos();
+        });
+    </script>
+</body>
+</html>
