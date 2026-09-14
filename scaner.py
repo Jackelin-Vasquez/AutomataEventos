@@ -1,37 +1,90 @@
-import cv2
-from base_datos import GestorBaseDatosMySQL
+# escaner.py
 
-db = GestorBaseDatosMySQL()
-detector = cv2.QRCodeDetector()
-cap = cv2.VideoCapture(0)
+def obtener_html_escaner():
+    """Retorna la interfaz web del escáner QR móvil integrada con HTML5-QRCode."""
+    return """
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Escáner Móvil QR - EventAccess</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+        <style>
+            body { background-color: #f8f9fa; font-family: sans-serif; }
+            #reader { width: 100%; max-width: 500px; margin: auto; border-radius: 10px; overflow: hidden; }
+            .card-res { max-width: 500px; margin: 20px auto; display: none; }
+        </style>
+    </head>
+    <body class="p-3 text-center">
+        <div class="container">
+            <h3 class="mb-3">📷 Escáner de Boletos QR</h3>
+            <p class="text-muted">Apunta con la cámara trasera al código QR del boleto</p>
 
-print("\n📷 Escáner iniciado. Presiona 'q' para salir...\n")
+            <div id="reader"></div>
 
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        break
+            <div id="card-resultado" class="card card-res shadow p-3">
+                <h4 id="txt-resultado" class="fw-bold"></h4>
+                <p id="txt-detalle" class="mb-2"></p>
+                <button class="btn btn-primary mt-2" onclick="reiniciarEscaner()">Escanear otro boleto</button>
+            </div>
 
-    data, bbox, _ = detector.detectAndDecode(frame)
+            <div class="mt-4">
+                <a href="/" class="btn btn-secondary">Volver al Módulo de Boletos</a>
+            </div>
+        </div>
 
-    if data:
-        codigo = data.strip()
-        print(f"\n🎯 QR DETECTADO: '{codigo}'")
+        <script>
+            let html5QrcodeScanner;
 
-        cadena_afnd, mensaje = db.consultar_y_generar_cadena(codigo)
-        print(f"💬 Estado BD: {mensaje}")
-        print(f"⚙️ Cadena AFND: '{cadena_afnd}'")
+            function onScanSuccess(decodedText, decodedResult) {
+                // Detener escáner temporalmente al leer un código
+                html5QrcodeScanner.clear();
 
-        if "AUTORIZADO" in mensaje:
-            db.marcar_como_usada(codigo)
+                // Enviar el QR leído al servidor en Render / Aiven
+                fetch('/api/validar_qr', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({codigo: decodedText})
+                })
+                .then(res => res.json())
+                .then(data => {
+                    const card = document.getElementById('card-resultado');
+                    const txtRes = document.getElementById('txt-resultado');
+                    const txtDet = document.getElementById('txt-detalle');
+                    card.style.display = 'block';
 
-        cv2.imshow("Escáner EventAccess", frame)
-        cv2.waitKey(2000)
-        break
+                    if (data.exito) {
+                        txtRes.className = "text-success fw-bold display-6";
+                        txtRes.innerText = "✓ ACCESO AUTORIZADO";
+                        txtDet.innerText = `Boleto: ${decodedText} | Estado: ${data.mensaje}`;
+                    } else {
+                        txtRes.className = "text-danger fw-bold display-6";
+                        txtRes.innerText = "✗ ACCESO DENEGADO";
+                        txtDet.innerText = `Boleto: ${decodedText} | Razón: ${data.mensaje}`;
+                    }
+                })
+                .catch(err => {
+                    alert("Error al conectar con el servidor: " + err);
+                });
+            }
 
-    cv2.imshow("Escáner EventAccess", frame)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+            function iniciarEscaner() {
+                document.getElementById('card-resultado').style.display = 'none';
+                html5QrcodeScanner = new Html5QrcodeScanner(
+                    "reader", { fps: 10, qrbox: {width: 250, height: 250} }, /* verbose= */ false
+                );
+                html5QrcodeScanner.render(onScanSuccess);
+            }
 
-cap.release()
-cv2.destroyAllWindows()
+            function reiniciarEscaner() {
+                iniciarEscaner();
+            }
+
+            // Iniciar la cámara al cargar la página
+            window.onload = iniciarEscaner;
+        </script>
+    </body>
+    </html>
+    """

@@ -235,9 +235,54 @@ class GestorBaseDatosMySQL:
         conexion.commit()
         cursor.close()
         conexion.close()
-        print("🔄 [MySQL]: Todos los boletos han sido restaurados a 'valida'.")
+        print("[MySQL]: Todos los boletos han sido restaurados a 'valida'.")
 
+    def obtener_todos_los_boletos(self):
+        """Retorna la lista de boletos con sus detalles para la tabla web."""
+        conexion = self.conectar()
+        if not conexion:
+            return []
+        cursor = conexion.cursor(dictionary=True)
+        query = """
+            SELECT b.codigo, b.tipo_entrada AS tipo, b.metodo_validacion, 
+                   e.nombre_evento AS evento, b.area_acceso, b.estado
+            FROM boletos b
+            JOIN eventos e ON b.id_evento = e.id_evento
+        """
+        cursor.execute(query)
+        boletos = cursor.fetchall()
+        cursor.close()
+        conexion.close()
+        return boletos
 
+    def registrar_o_actualizar_boleto(self, codigo, asistente, evento, tipo):
+        """Registra o actualiza un boleto emitido desde la web."""
+        conexion = self.conectar()
+        if not conexion:
+            return False
+        try:
+            cursor = conexion.cursor()
+            query = """
+                INSERT INTO boletos (codigo, tipo_entrada, metodo_validacion, id_evento, area_acceso, estado)
+                VALUES (%s, %s, 'QR', 1, %s, 'valida')
+                ON DUPLICATE KEY UPDATE tipo_entrada=%s, estado='valida'
+            """
+            cursor.execute(query, (codigo, tipo, f"Zona {tipo}", tipo))
+            conexion.commit()
+            cursor.close()
+            conexion.close()
+            return True
+        except Error as e:
+            print(f"Error al registrar/actualizar boleto: {e}")
+            return False
+
+    def validar_y_cambiar_estado(self, codigo):
+        """Procesa la lectura desde el escáner web y actualiza la BD."""
+        cadena_afnd, mensaje = self.consultar_y_generar_cadena(codigo)
+        exito = "AUTORIZADO" in mensaje
+        if exito:
+            self.marcar_como_usada(codigo)
+        return {"exito": exito, "mensaje": mensaje, "cadena": cadena_afnd}
 if __name__ == "__main__":
     db = GestorBaseDatosMySQL()
     print("Base de datos inicializada correctamente.")

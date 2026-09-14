@@ -5,8 +5,7 @@ from reportlab.graphics.shapes import Drawing
 from reportlab.graphics.barcode import qr
 
 
-def crear_boleto_pdf(codigo="EVT123", evento="Concierto Principal 2026", tipo="VIP", area="Zona VIP",
-                     archivo_salida="Boleto_EVT123.pdf"):
+def crear_pdf_boleto(codigo="EVT123", asistente="invitado", evento="Concierto Principal 2026", tipo="VIP", archivo_salida="Boleto_EVT123.pdf"):
     """Genera un boleto PDF en formato ticket con código QR."""
     ancho, alto = landscape(A6)
     c = canvas.Canvas(archivo_salida, pagesize=landscape(A6))
@@ -16,7 +15,7 @@ def crear_boleto_pdf(codigo="EVT123", evento="Concierto Principal 2026", tipo="V
     c.rect(0, alto - 45, ancho, 45, fill=1, stroke=0)
     c.setFillColor(colors.white)
     c.setFont("Helvetica-Bold", 14)
-    c.drawString(15, alto - 28, "🎟️ EventAccess - TICKET OFICIAL")
+    c.drawString(15, alto - 28, "🎟 EventAccess - TICKET OFICIAL")
 
     # Detalles del boleto
     c.setFillColor(colors.HexColor("#2C3E50"))
@@ -25,8 +24,8 @@ def crear_boleto_pdf(codigo="EVT123", evento="Concierto Principal 2026", tipo="V
 
     c.setFont("Helvetica", 10)
     c.setFillColor(colors.HexColor("#333333"))
-    c.drawString(15, alto - 85, f"Tipo de Entrada: {tipo}")
-    c.drawString(15, alto - 100, f"Área de Acceso: {area}")
+    c.drawString(15, alto - 85, f"Asistente: {asistente}")
+    c.drawString(15, alto - 100, f"Tipo de Entrada: {tipo} | Área: Zona {tipo}")
     c.drawString(15, alto - 115, f"Código de Boleto: {codigo}")
 
     c.setFont("Helvetica-Oblique", 8)
@@ -48,4 +47,4 @@ def crear_boleto_pdf(codigo="EVT123", evento="Concierto Principal 2026", tipo="V
 
 
 if __name__ == "__main__":
-    crear_boleto_pdf()
+    crear_pdf_boleto()
