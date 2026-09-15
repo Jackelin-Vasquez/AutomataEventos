@@ -1,6 +1,2081 @@
-<!--
-VISTA: Simulador Interactivo del AFND (Grafo & Animación)
-    Lienzo dinámico (Vis.js / Cytoscape.js) que renderiza el grafo del AFND.
-    Permite evaluar cadenas paso a paso, iluminando los nodos y conjuntos de
-    estados activos para resaltar el comportamiento no determinista del autómata.
--->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Simulador AFND - Control de Acceso</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f4f7fb;
+            color: #263238;
+            min-height: 100vh;
+        }
+
+        /* =========================
+           ENCABEZADO
+        ========================= */
+
+        .header {
+            background: linear-gradient(135deg, #173b67, #245b91);
+            color: white;
+            padding: 25px 40px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+        }
+
+        .header-content {
+            max-width: 1450px;
+            margin: auto;
+        }
+
+        .header h1 {
+            font-size: 30px;
+            font-weight: 700;
+            margin-bottom: 7px;
+        }
+
+        .header p {
+            font-size: 15px;
+            opacity: 0.9;
+        }
+
+        /* =========================
+           CONTENEDOR PRINCIPAL
+        ========================= */
+
+        .container {
+            max-width: 1450px;
+            margin: 30px auto;
+            padding: 0 25px;
+        }
+
+        /* =========================
+           TARJETA DE CONTROL
+        ========================= */
+
+        .control-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(31, 55, 80, 0.08);
+            margin-bottom: 25px;
+        }
+
+        .control-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #173b67;
+            margin-bottom: 18px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .input-container {
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .input-container label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #455a64;
+            margin-bottom: 7px;
+        }
+
+        #cadena {
+            width: 100%;
+            height: 48px;
+            border: 2px solid #d9e2ec;
+            border-radius: 10px;
+            padding: 0 15px;
+            font-size: 17px;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        #cadena:focus {
+            border-color: #2878c8;
+            box-shadow: 0 0 0 3px rgba(40, 120, 200, 0.12);
+        }
+
+        /* =========================
+           BOTONES
+        ========================= */
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+
+        button {
+            border: none;
+            border-radius: 9px;
+            height: 46px;
+            padding: 0 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-process {
+            background: #2878c8;
+            color: white;
+        }
+
+        .btn-step {
+            background: #e8f1fb;
+            color: #245b91;
+        }
+
+        .btn-reset {
+            background: #eef1f4;
+            color: #455a64;
+        }
+
+        .btn-exit {
+            background: #fbe9e7;
+            color: #c62828;
+        }
+
+        /* =========================
+           INFORMACIÓN SUPERIOR
+        ========================= */
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            margin-bottom: 25px;
+        }
+
+        .status-card {
+            background: white;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(31, 55, 80, 0.07);
+            border-left: 5px solid #2878c8;
+        }
+
+        .status-card:nth-child(2) {
+            border-left-color: #43a047;
+        }
+
+        .status-card:nth-child(3) {
+            border-left-color: #fb8c00;
+        }
+
+        .status-card:nth-child(4) {
+            border-left-color: #8e24aa;
+        }
+
+        .status-label {
+            font-size: 12px;
+            color: #78909c;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .status-value {
+            font-size: 19px;
+            font-weight: 700;
+            color: #263238;
+            min-height: 25px;
+        }
+
+        /* =========================
+           PANEL PRINCIPAL
+        ========================= */
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 5px 20px rgba(31, 55, 80, 0.08);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #edf1f5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h2 {
+            color: #173b67;
+            font-size: 19px;
+        }
+
+        .card-header span {
+            font-size: 12px;
+            color: #78909c;
+        }
+
+        /* =========================
+           GRAFO DEL AFND
+        ========================= */
+
+        .graph-container {
+            width: 100%;
+            height: 530px;
+            position: relative;
+            overflow: auto;
+            background:
+                linear-gradient(#f1f5f9 1px, transparent 1px),
+                linear-gradient(90deg, #f1f5f9 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            min-width: 700px;
+        }
+
+        .transition {
+            stroke: #8ca0b3;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .transition-label {
+            font-size: 15px;
+            font-weight: 600;
+            fill: #455a64;
+        }
+
+        .state {
+            fill: white;
+            stroke: #55718b;
+            stroke-width: 3;
+            transition: all 0.3s ease;
+        }
+
+        .state.accepting {
+            stroke-width: 5;
+        }
+
+        .state-text {
+            font-size: 16px;
+            font-weight: 700;
+            text-anchor: middle;
+            dominant-baseline: middle;
+            fill: #263238;
+        }
+
+        .state.active {
+            fill: #dff3e4;
+            stroke: #2e9d55;
+            stroke-width: 5;
+            filter: drop-shadow(0 0 8px rgba(46, 157, 85, 0.35));
+        }
+
+        .state.current {
+            fill: #fff2d8;
+            stroke: #ef8c22;
+            stroke-width: 5;
+            filter: drop-shadow(0 0 8px rgba(239, 140, 34, 0.35));
+        }
+
+        .state.accepted {
+            fill: #d7f5df;
+            stroke: #1b8c42;
+            stroke-width: 6;
+        }
+
+        .state.rejected {
+            fill: #fde1e1;
+            stroke: #d32f2f;
+            stroke-width: 5;
+        }
+
+        .transition.active-transition {
+            stroke: #2878c8;
+            stroke-width: 4;
+        }
+
+        .transition-label.active-label {
+            fill: #2878c8;
+            font-weight: 800;
+        }
+
+        /* =========================
+           LEYENDA
+        ========================= */
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            padding: 16px 24px;
+            border-top: 1px solid #edf1f5;
+            font-size: 13px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .legend-circle {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 3px solid #55718b;
+            background: white;
+        }
+
+        .legend-circle.active {
+            background: #dff3e4;
+            border-color: #2e9d55;
+        }
+
+        .legend-circle.current {
+            background: #fff2d8;
+            border-color: #ef8c22;
+        }
+
+        .legend-circle.accepted {
+            background: #d7f5df;
+            border-color: #1b8c42;
+        }
+
+        /* =========================
+           PANEL DE INFORMACIÓN
+        ========================= */
+
+        .side-content {
+            padding: 22px;
+        }
+
+        .info-box {
+            background: #f7f9fc;
+            border-radius: 11px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .info-box h3 {
+            font-size: 14px;
+            color: #173b67;
+            margin-bottom: 10px;
+        }
+
+        .info-box p {
+            font-size: 14px;
+            color: #546e7a;
+            line-height: 1.6;
+        }
+
+        .states-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .state-tag {
+            background: #e8f1fb;
+            color: #245b91;
+            padding: 6px 10px;
+            border-radius: 7px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .transition-list {
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .transition-item {
+            background: white;
+            border: 1px solid #e5ebf1;
+            border-radius: 8px;
+            padding: 9px 11px;
+            margin-bottom: 7px;
+            font-size: 13px;
+            color: #455a64;
+        }
+
+        /* =========================
+           RESULTADO
+        ========================= */
+
+        .result-box {
+            padding: 20px;
+            margin: 20px 24px;
+            border-radius: 12px;
+            text-align: center;
+            display: none;
+        }
+
+        .result-box.show {
+            display: block;
+        }
+
+        .result-box.accepted {
+            background: #e6f6ea;
+            border: 1px solid #a7dcb2;
+            color: #1b7a37;
+        }
+
+        .result-box.rejected {
+            background: #fdeaea;
+            border: 1px solid #f0b4b4;
+            color: #b71c1c;
+        }
+
+        .result-title {
+            font-size: 21px;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .result-description {
+            font-size: 14px;
+        }
+
+        /* =========================
+           HISTORIAL
+        ========================= */
+
+        .history-card {
+            margin-top: 25px;
+        }
+
+        .history {
+            padding: 20px 24px;
+            max-height: 330px;
+            overflow-y: auto;
+        }
+
+        .step {
+            display: grid;
+            grid-template-columns: 70px 90px 1fr 1fr;
+            gap: 15px;
+            align-items: center;
+            padding: 13px;
+            margin-bottom: 9px;
+            border: 1px solid #e7edf3;
+            border-radius: 9px;
+            background: #fafcfe;
+        }
+
+        .step-number {
+            font-weight: 800;
+            color: #2878c8;
+        }
+
+        .step-symbol {
+            font-weight: 700;
+            color: #ef8c22;
+        }
+
+        .step-states {
+            font-size: 13px;
+            color: #455a64;
+        }
+
+        .step-transition {
+            font-size: 13px;
+            color: #607d8b;
+        }
+
+        .empty-history {
+            text-align: center;
+            padding: 30px;
+            color: #90a4ae;
+            font-size: 14px;
+        }
+
+        /* =========================
+           ALERTA
+        ========================= */
+
+        .alert {
+            display: none;
+            margin-top: 15px;
+            padding: 12px 15px;
+            border-radius: 9px;
+            font-size: 14px;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert.error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+
+        .alert.warning {
+            background: #fff8e1;
+            color: #ef6c00;
+            border: 1px solid #ffe082;
+        }
+
+        /* =========================
+           RESPONSIVE
+        ========================= */
+
+        @media (max-width: 1100px) {
+            .status-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .container {
+                padding: 0 12px;
+                margin-top: 20px;
+            }
+
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .buttons {
+                width: 100%;
+            }
+
+            button {
+                flex: 1;
+                min-width: 130px;
+            }
+
+            .step {
+                grid-template-columns: 1fr;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- =========================
+         ENCABEZADO
+    ========================= -->
+
+    <header class="header">
+        <div class="header-content">
+            <h1>Simulador de Autómata Finito No Determinista</h1>
+            <p>
+                Sistema de control de acceso a eventos mediante AFND
+            </p>
+        </div>
+    </header>
+
+
+    <main class="container">
+
+        <!-- =========================
+             CONTROLES
+        ========================= -->
+
+        <section class="control-card">
+
+            <div class="control-title">
+                Evaluación de cadena
+            </div>
+
+            <div class="input-row">
+
+                <div class="input-container">
+
+                    <label for="cadena">
+                        Ingrese la cadena a evaluar
+                    </label>
+
+                    <input
+                        type="text"
+                        id="cadena"
+                        placeholder="Ejemplo: qqvva"
+                        autocomplete="off"
+                    >
+
+                </div>
+
+
+                <div class="buttons">
+
+                    <button
+                        class="btn-process"
+                        onclick="procesarCadena()">
+                        Procesar
+                    </button>
+
+                    <button
+                        class="btn-step"
+                        onclick="avanzarPaso()">
+                        Avanzar paso a paso
+                    </button>
+
+                    <button
+                        class="btn-reset"
+                        onclick="reiniciar()">
+                        Reiniciar
+                    </button>
+
+                    <button
+                        class="btn-exit"
+                        onclick="salir()">
+                        Salir
+                    </button>
+
+                </div>
+
+            </div>
+
+            <div id="alerta" class="alert"></div>
+
+        </section>
+
+
+        <!-- =========================
+             ESTADO ACTUAL
+        ========================= -->
+
+        <section class="status-grid">
+
+            <div class="status-card">
+                <div class="status-label">
+                    Símbolo actual
+                </div>
+
+                <div
+                    class="status-value"
+                    id="simboloActual">
+                    —
+                </div>
+            </div>
+
+
+            <div class="status-card">
+                <div class="status-label">
+                    Estados activos
+                </div>
+
+                <div
+                    class="status-value"
+                    id="estadosActivos">
+                    {q0}
+                </div>
+            </div>
+
+
+            <div class="status-card">
+                <div class="status-label">
+                    Paso actual
+                </div>
+
+                <div
+                    class="status-value"
+                    id="pasoActual">
+                    0
+                </div>
+            </div>
+
+
+            <div class="status-card">
+                <div class="status-label">
+                    Estado del autómata
+                </div>
+
+                <div
+                    class="status-value"
+                    id="estadoAutomata">
+                    Esperando
+                </div>
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             GRAFO + INFORMACIÓN
+        ========================= -->
+
+        <section class="main-grid">
+
+
+            <!-- GRAFO -->
+
+            <div class="card">
+
+                <div class="card-header">
+
+                    <h2>
+                        Representación gráfica del AFND
+                    </h2>
+
+                    <span>
+                        Estados y transiciones
+                    </span>
+
+                </div>
+
+
+                <div class="graph-container">
+
+
+                    <svg
+                        id="automataGraph"
+                        viewBox="0 0 900 500"
+                        xmlns="http://www.w3.org/2000/svg">
+
+                        <defs>
+
+                            <marker
+                                id="arrow"
+                                markerWidth="10"
+                                markerHeight="10"
+                                refX="9"
+                                refY="3"
+                                orient="auto"
+                                markerUnits="strokeWidth">
+
+                                <path
+                                    d="M0,0 L0,6 L9,3 z"
+                                    fill="#8ca0b3">
+                                </path>
+
+                            </marker>
+
+                            <marker
+                                id="arrowActive"
+                                markerWidth="10"
+                                markerHeight="10"
+                                refX="9"
+                                refY="3"
+                                orient="auto"
+                                markerUnits="strokeWidth">
+
+                                <path
+                                    d="M0,0 L0,6 L9,3 z"
+                                    fill="#2878c8">
+                                </path>
+
+                            </marker>
+
+                        </defs>
+
+
+                        <!-- FLECHA DE INICIO -->
+
+                        <line
+                            x1="35"
+                            y1="250"
+                            x2="100"
+                            y2="250"
+                            class="transition"
+                            marker-end="url(#arrow)">
+                        </line>
+
+
+                        <!-- TRANSICIONES -->
+
+                        <line
+                            id="transition-q0-q1"
+                            x1="145"
+                            y1="250"
+                            x2="295"
+                            y2="250"
+                            class="transition"
+                            marker-end="url(#arrow)">
+                        </line>
+
+                        <text
+                            x="220"
+                            y="235"
+                            class="transition-label">
+                            q
+                        </text>
+
+
+                        <line
+                            id="transition-q1-q2"
+                            x1="345"
+                            y1="250"
+                            x2="495"
+                            y2="250"
+                            class="transition"
+                            marker-end="url(#arrow)">
+                        </line>
+
+                        <text
+                            x="420"
+                            y="235"
+                            class="transition-label">
+                            v
+                        </text>
+
+
+                        <line
+                            id="transition-q2-q3"
+                            x1="545"
+                            y1="250"
+                            x2="695"
+                            y2="250"
+                            class="transition"
+                            marker-end="url(#arrow)">
+                        </line>
+
+                        <text
+                            x="620"
+                            y="235"
+                            class="transition-label">
+                            a
+                        </text>
+
+
+                        <!-- ESTADO q0 -->
+
+                        <circle
+                            id="state-q0"
+                            cx="120"
+                            cy="250"
+                            r="35"
+                            class="state">
+                        </circle>
+
+                        <text
+                            x="120"
+                            y="250"
+                            class="state-text">
+                            q0
+                        </text>
+
+
+                        <!-- ESTADO q1 -->
+
+                        <circle
+                            id="state-q1"
+                            cx="320"
+                            cy="250"
+                            r="35"
+                            class="state">
+                        </circle>
+
+                        <text
+                            x="320"
+                            y="250"
+                            class="state-text">
+                            q1
+                        </text>
+
+
+                        <!-- ESTADO q2 -->
+
+                        <circle
+                            id="state-q2"
+                            cx="520"
+                            cy="250"
+                            r="35"
+                            class="state">
+                        </circle>
+
+                        <text
+                            x="520"
+                            y="250"
+                            class="state-text">
+                            q2
+                        </text>
+
+
+                        <!-- ESTADO FINAL -->
+
+                        <circle
+                            id="state-q3"
+                            cx="720"
+                            cy="250"
+                            r="35"
+                            class="state accepting">
+                        </circle>
+
+                        <circle
+                            cx="720"
+                            cy="250"
+                            r="28"
+                            class="state accepting">
+                        </circle>
+
+                        <text
+                            x="720"
+                            y="250"
+                            class="state-text">
+                            q3
+                        </text>
+
+                    </svg>
+
+                </div>
+
+
+                <!-- LEYENDA -->
+
+                <div class="legend">
+
+                    <div class="legend-item">
+
+                        <div class="legend-circle"></div>
+
+                        <span>
+                            Estado
+                        </span>
+
+                    </div>
+
+
+                    <div class="legend-item">
+
+                        <div class="legend-circle active"></div>
+
+                        <span>
+                            Estado activo
+                        </span>
+
+                    </div>
+
+
+                    <div class="legend-item">
+
+                        <div class="legend-circle current"></div>
+
+                        <span>
+                            Estado actual
+                        </span>
+
+                    </div>
+
+
+                    <div class="legend-item">
+
+                        <div class="legend-circle accepted"></div>
+
+                        <span>
+                            Estado de aceptación
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- RESULTADO -->
+
+                <div
+                    id="resultado"
+                    class="result-box">
+
+                    <div
+                        id="resultadoTitulo"
+                        class="result-title">
+                    </div>
+
+                    <div
+                        id="resultadoDescripcion"
+                        class="result-description">
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- PANEL LATERAL -->
+
+            <div class="card">
+
+                <div class="card-header">
+
+                    <h2>
+                        Información
+                    </h2>
+
+                    <span>
+                        Simulación
+                    </span>
+
+                </div>
+
+
+                <div class="side-content">
+
+
+                    <!-- ALFABETO -->
+
+                    <div class="info-box">
+
+                        <h3>
+                            Alfabeto
+                        </h3>
+
+                        <div
+                            id="alfabeto"
+                            class="states-list">
+
+                            <span class="state-tag">q</span>
+                            <span class="state-tag">c</span>
+                            <span class="state-tag">v</span>
+                            <span class="state-tag">g</span>
+                            <span class="state-tag">a</span>
+                            <span class="state-tag">e</span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ESTADOS ACTIVOS -->
+
+                    <div class="info-box">
+
+                        <h3>
+                            Conjunto de estados activos
+                        </h3>
+
+                        <div
+                            id="listaEstados"
+                            class="states-list">
+
+                            <span class="state-tag">
+                                q0
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- TRANSICIONES -->
+
+                    <div class="info-box">
+
+                        <h3>
+                            Transiciones realizadas
+                        </h3>
+
+                        <div
+                            id="listaTransiciones"
+                            class="transition-list">
+
+                            <div class="empty-history">
+                                Aún no se han realizado transiciones.
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- RUTAS -->
+
+                    <div class="info-box">
+
+                        <h3>
+                            Rutas posibles
+                        </h3>
+
+                        <div
+                            id="rutas">
+
+                            <p>
+                                Las rutas aparecerán durante la
+                                simulación del AFND.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             HISTORIAL
+        ========================= -->
+
+        <section class="card history-card">
+
+            <div class="card-header">
+
+                <h2>
+                    Historial de simulación
+                </h2>
+
+                <span>
+                    Seguimiento paso a paso
+                </span>
+
+            </div>
+
+
+            <div
+                id="historial"
+                class="history">
+
+                <div class="empty-history">
+                    Ingrese una cadena y presione
+                    "Procesar" o "Avanzar paso a paso".
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <script>
+
+        /*
+        ============================================================
+        VARIABLES DEL SIMULADOR
+        ============================================================
+        */
+
+        let cadena = "";
+        let posicion = 0;
+
+        let estadosActivos = ["q0"];
+
+        let historial = [];
+
+
+        /*
+        ============================================================
+        MOSTRAR ALERTA
+        ============================================================
+        */
+
+        function mostrarAlerta(mensaje, tipo = "error") {
+
+            const alerta = document.getElementById("alerta");
+
+            alerta.textContent = mensaje;
+
+            alerta.className = "alert show " + tipo;
+
+        }
+
+
+        function ocultarAlerta() {
+
+            const alerta = document.getElementById("alerta");
+
+            alerta.className = "alert";
+
+            alerta.textContent = "";
+
+        }
+
+
+        /*
+        ============================================================
+        ACTUALIZAR INFORMACIÓN
+        ============================================================
+        */
+
+        function actualizarEstados() {
+
+            const elemento =
+                document.getElementById("estadosActivos");
+
+            elemento.textContent =
+                "{" + estadosActivos.join(", ") + "}";
+
+
+            const lista =
+                document.getElementById("listaEstados");
+
+            lista.innerHTML = "";
+
+            estadosActivos.forEach(function(estado) {
+
+                const span =
+                    document.createElement("span");
+
+                span.className = "state-tag";
+
+                span.textContent = estado;
+
+                lista.appendChild(span);
+
+            });
+
+        }
+
+
+        /*
+        ============================================================
+        LIMPIAR ESTADOS DEL GRAFO
+        ============================================================
+        */
+
+        function limpiarGrafo() {
+
+            const estados = [
+                "q0",
+                "q1",
+                "q2",
+                "q3"
+            ];
+
+            estados.forEach(function(estado) {
+
+                const elemento =
+                    document.getElementById("state-" + estado);
+
+                if (elemento) {
+
+                    elemento.classList.remove(
+                        "active",
+                        "current",
+                        "accepted",
+                        "rejected"
+                    );
+
+                }
+
+            });
+
+            const transiciones = [
+                "transition-q0-q1",
+                "transition-q1-q2",
+                "transition-q2-q3"
+            ];
+
+            transiciones.forEach(function(id) {
+
+                const elemento =
+                    document.getElementById(id);
+
+                if (elemento) {
+
+                    elemento.classList.remove(
+                        "active-transition"
+                    );
+
+                }
+
+            });
+
+        }
+
+
+        /*
+        ============================================================
+        RESALTAR ESTADOS ACTIVOS
+        ============================================================
+        */
+
+        function resaltarEstados() {
+
+            limpiarGrafo();
+
+            estadosActivos.forEach(function(estado) {
+
+                const elemento =
+                    document.getElementById(
+                        "state-" + estado
+                    );
+
+                if (elemento) {
+
+                    elemento.classList.add("active");
+
+                }
+
+            });
+
+        }
+
+
+        /*
+        ============================================================
+        AGREGAR PASO AL HISTORIAL
+        ============================================================
+        */
+
+        function agregarHistorial(
+            numero,
+            simbolo,
+            anteriores,
+            siguientes,
+            transicion
+        ) {
+
+            const historialElemento =
+                document.getElementById("historial");
+
+
+            if (historial.length === 0) {
+
+                historialElemento.innerHTML = "";
+
+            }
+
+
+            const div =
+                document.createElement("div");
+
+            div.className = "step";
+
+
+            div.innerHTML = `
+
+                <div class="step-number">
+                    Paso ${numero}
+                </div>
+
+                <div class="step-symbol">
+                    Símbolo: ${simbolo}
+                </div>
+
+                <div class="step-states">
+                    ${anteriores.join(", ")}
+                    →
+                    ${siguientes.join(", ")}
+                </div>
+
+                <div class="step-transition">
+                    ${transicion}
+                </div>
+
+            `;
+
+
+            historialElemento.appendChild(div);
+
+
+            historialElemento.scrollTop =
+                historialElemento.scrollHeight;
+
+        }
+
+
+        /*
+        ============================================================
+        MOSTRAR TRANSICIÓN
+        ============================================================
+        */
+
+        function agregarTransicion(texto) {
+
+            const lista =
+                document.getElementById(
+                    "listaTransiciones"
+                );
+
+
+            if (historial.length === 1) {
+
+                lista.innerHTML = "";
+
+            }
+
+
+            const div =
+                document.createElement("div");
+
+            div.className =
+                "transition-item";
+
+            div.textContent = texto;
+
+            lista.appendChild(div);
+
+        }
+
+
+        /*
+        ============================================================
+        PROCESAR CADENA COMPLETA
+        ============================================================
+        */
+
+        async function procesarCadena() {
+
+            ocultarAlerta();
+
+            const campo =
+                document.getElementById("cadena");
+
+            cadena =
+                campo.value.trim().toLowerCase();
+
+
+            if (cadena === "") {
+
+                mostrarAlerta(
+                    "Debe ingresar una cadena para procesar."
+                );
+
+                return;
+
+            }
+
+
+            reiniciar(false);
+
+
+            /*
+            --------------------------------------------------------
+            AQUÍ SE CONECTARÁ CON app_web.py
+            --------------------------------------------------------
+
+            Ejemplo:
+
+            fetch("/api/afnd/procesar", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    cadena: cadena
+                })
+            })
+
+            --------------------------------------------------------
+            */
+
+
+            try {
+
+                const respuesta =
+                    await fetch(
+                        "/api/afnd/procesar",
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body: JSON.stringify({
+                                cadena: cadena
+                            })
+                        }
+                    );
+
+
+                if (!respuesta.ok) {
+
+                    throw new Error(
+                        "No fue posible procesar la cadena."
+                    );
+
+                }
+
+
+                const datos =
+                    await respuesta.json();
+
+
+                mostrarResultadoServidor(datos);
+
+            }
+
+            catch (error) {
+
+                mostrarAlerta(
+                    "No se pudo conectar con el motor AFND. Verifique que el servidor esté ejecutándose."
+                );
+
+            }
+
+        }
+
+
+        /*
+        ============================================================
+        MOSTRAR RESULTADO DEL SERVIDOR
+        ============================================================
+        */
+
+        function mostrarResultadoServidor(datos) {
+
+            if (!datos) {
+
+                return;
+
+            }
+
+
+            /*
+            Se espera que afnd.py devuelva información
+            como:
+
+            {
+                aceptada: true,
+                estados_finales: ["q3"],
+                pasos: [...]
+            }
+            */
+
+
+            if (datos.aceptada === true) {
+
+                mostrarResultado(
+                    true,
+                    "CADENA ACEPTADA",
+                    "Al menos una ruta del AFND alcanza un estado de aceptación."
+                );
+
+            }
+
+            else if (datos.aceptada === false) {
+
+                mostrarResultado(
+                    false,
+                    "CADENA RECHAZADA",
+                    "Ninguna de las rutas posibles alcanza un estado de aceptación."
+                );
+
+            }
+
+
+            if (datos.estados_finales) {
+
+                estadosActivos =
+                    datos.estados_finales;
+
+                actualizarEstados();
+
+                resaltarEstados();
+
+            }
+
+        }
+
+
+        /*
+        ============================================================
+        AVANZAR PASO A PASO
+        ============================================================
+        */
+
+        async function avanzarPaso() {
+
+            ocultarAlerta();
+
+
+            if (document
+                .getElementById("cadena")
+                .value
+                .trim() === "") {
+
+                mostrarAlerta(
+                    "Primero debe ingresar una cadena."
+                );
+
+                return;
+
+            }
+
+
+            if (cadena === "") {
+
+                cadena =
+                    document
+                    .getElementById("cadena")
+                    .value
+                    .trim()
+                    .toLowerCase();
+
+            }
+
+
+            if (posicion >= cadena.length) {
+
+                mostrarAlerta(
+                    "La cadena ya fue procesada.",
+                    "warning"
+                );
+
+                return;
+
+            }
+
+
+            const simbolo =
+                cadena[posicion];
+
+
+            document.getElementById(
+                "simboloActual"
+            ).textContent = simbolo;
+
+
+            /*
+            --------------------------------------------------------
+            CONEXIÓN CON EL MOTOR AFND
+            --------------------------------------------------------
+
+            Se puede cambiar posteriormente para solicitar
+            al servidor el siguiente paso.
+
+            --------------------------------------------------------
+            */
+
+
+            try {
+
+                const respuesta =
+                    await fetch(
+                        "/api/afnd/paso",
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body: JSON.stringify({
+                                cadena: cadena,
+                                posicion: posicion,
+                                estados: estadosActivos
+                            })
+                        }
+                    );
+
+
+                if (!respuesta.ok) {
+
+                    throw new Error();
+
+                }
+
+
+                const datos =
+                    await respuesta.json();
+
+
+                const anteriores =
+                    [...estadosActivos];
+
+
+                const siguientes =
+                    datos.estados_siguientes ||
+                    [];
+
+
+                const transicion =
+                    datos.transiciones ||
+                    "Transición procesada";
+
+
+                estadosActivos =
+                    siguientes;
+
+
+                agregarHistorial(
+                    posicion + 1,
+                    simbolo,
+                    anteriores,
+                    siguientes,
+                    transicion
+                );
+
+
+                agregarTransicion(
+                    anteriores.join(", ")
+                    + " --"
+                    + simbolo
+                    + "--> "
+                    + siguientes.join(", ")
+                );
+
+
+                posicion++;
+
+
+                document.getElementById(
+                    "pasoActual"
+                ).textContent = posicion;
+
+
+                actualizarEstados();
+
+                resaltarEstados();
+
+
+                if (posicion >= cadena.length) {
+
+                    if (datos.aceptada === true) {
+
+                        mostrarResultado(
+                            true,
+                            "CADENA ACEPTADA",
+                            "Existe al menos una ruta que llega a un estado final."
+                        );
+
+                    }
+
+                    else if (
+                        datos.aceptada === false
+                    ) {
+
+                        mostrarResultado(
+                            false,
+                            "CADENA RECHAZADA",
+                            "Ninguna ruta llega a un estado final."
+                        );
+
+                    }
+
+                }
+
+            }
+
+            catch (error) {
+
+                mostrarAlerta(
+                    "No fue posible ejecutar el paso del AFND."
+                );
+
+            }
+
+        }
+
+
+        /*
+        ============================================================
+        MOSTRAR RESULTADO
+        ============================================================
+        */
+
+        function mostrarResultado(
+            aceptada,
+            titulo,
+            descripcion
+        ) {
+
+            const resultado =
+                document.getElementById(
+                    "resultado"
+                );
+
+            const tituloElemento =
+                document.getElementById(
+                    "resultadoTitulo"
+                );
+
+            const descripcionElemento =
+                document.getElementById(
+                    "resultadoDescripcion"
+                );
+
+
+            resultado.className =
+                "result-box show " +
+                (aceptada
+                    ? "accepted"
+                    : "rejected");
+
+
+            tituloElemento.textContent =
+                titulo;
+
+
+            descripcionElemento.textContent =
+                descripcion;
+
+
+            document.getElementById(
+                "estadoAutomata"
+            ).textContent =
+                aceptada
+                    ? "Aceptada"
+                    : "Rechazada";
+
+
+            if (aceptada) {
+
+                estadosActivos.forEach(
+                    function(estado) {
+
+                        const elemento =
+                            document.getElementById(
+                                "state-" + estado
+                            );
+
+                        if (elemento) {
+
+                            elemento.classList.remove(
+                                "active"
+                            );
+
+                            elemento.classList.add(
+                                "accepted"
+                            );
+
+                        }
+
+                    }
+                );
+
+            }
+
+            else {
+
+                estadosActivos.forEach(
+                    function(estado) {
+
+                        const elemento =
+                            document.getElementById(
+                                "state-" + estado
+                            );
+
+                        if (elemento) {
+
+                            elemento.classList.remove(
+                                "active"
+                            );
+
+                            elemento.classList.add(
+                                "rejected"
+                            );
+
+                        }
+
+                    }
+                );
+
+            }
+
+        }
+
+
+        /*
+        ============================================================
+        REINICIAR
+        ============================================================
+        */
+
+        function reiniciar(limpiarCampo = true) {
+
+            if (limpiarCampo) {
+
+                document.getElementById(
+                    "cadena"
+                ).value = "";
+
+            }
+
+
+            cadena = "";
+
+            posicion = 0;
+
+            estadosActivos = ["q0"];
+
+            historial = [];
+
+
+            document.getElementById(
+                "simboloActual"
+            ).textContent = "—";
+
+
+            document.getElementById(
+                "pasoActual"
+            ).textContent = "0";
+
+
+            document.getElementById(
+                "estadoAutomata"
+            ).textContent = "Esperando";
+
+
+            document.getElementById(
+                "historial"
+            ).innerHTML = `
+
+                <div class="empty-history">
+                    Ingrese una cadena y presione
+                    "Procesar" o "Avanzar paso a paso".
+                </div>
+
+            `;
+
+
+            document.getElementById(
+                "listaTransiciones"
+            ).innerHTML = `
+
+                <div class="empty-history">
+                    Aún no se han realizado transiciones.
+                </div>
+
+            `;
+
+
+            document.getElementById(
+                "rutas"
+            ).innerHTML = `
+
+                <p>
+                    Las rutas aparecerán durante la
+                    simulación del AFND.
+                </p>
+
+            `;
+
+
+            const resultado =
+                document.getElementById(
+                    "resultado"
+                );
+
+            resultado.className =
+                "result-box";
+
+
+            actualizarEstados();
+
+            limpiarGrafo();
+
+            ocultarAlerta();
+
+
+            /*
+            Estado inicial
+            */
+
+            const inicial =
+                document.getElementById(
+                    "state-q0"
+                );
+
+            if (inicial) {
+
+                inicial.classList.add(
+                    "active"
+                );
+
+            }
+
+        }
+
+
+        /*
+        ============================================================
+        SALIR
+        ============================================================
+        */
+
+        function salir() {
+
+            window.location.href =
+                "/logout";
+
+        }
+
+
+        /*
+        ============================================================
+        ENTER PARA PROCESAR
+        ============================================================
+        */
+
+        document.getElementById(
+            "cadena"
+        ).addEventListener(
+            "keydown",
+            function(event) {
+
+                if (event.key === "Enter") {
+
+                    procesarCadena();
+
+                }
+
+            }
+        );
+
+
+        /*
+        ============================================================
+        INICIALIZACIÓN
+        ============================================================
+        */
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            function() {
+
+                actualizarEstados();
+
+                limpiarGrafo();
+
+
+                const inicial =
+                    document.getElementById(
+                        "state-q0"
+                    );
+
+                if (inicial) {
+
+                    inicial.classList.add(
+                        "active"
+                    );
+
+                }
+
+            }
+        );
+
+    </script>
+
+</body>
+</html>
