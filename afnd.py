@@ -127,4 +127,21 @@ class AFND:
             return False, "Acceso rechazado (Q8)", self._foto_estados()
         return False, "Cadena incompleta: no se alcanzó un estado final", self._foto_estados()
 
+    def estados_activos(self):
+        """
+        Versión serializable (lista de strings 'Q0'..'Q8') para mandar por
+        JSON a la página del simulador. Si todavía no entró ningún símbolo
+        (self.q9 sigue True), el autómata está en reposo en Q0.
+        """
+        if self.q9:
+            return ["Q0"]
+ 
+        nombres = {
+            "q1": "Q1", "q2": "Q2", "q3": "Q3", "q4": "Q4",
+            "q5": "Q5", "q6": "Q6", "q7": "Q7", "q8": "Q8",
+        }
+        activos = [nombre for attr, nombre in nombres.items() if getattr(self, attr)]
+        return activos if activos else ["Q0"]
+
+
     

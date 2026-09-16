@@ -8,6 +8,7 @@ import os
 from flask import Flask, render_template, request, send_file, jsonify, redirect, url_for, session
 import base_datos
 import generador_pdf
+from afnd import AFND
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "eventaccess_secret_key_2026")
@@ -119,6 +120,66 @@ def validar_qr():
     codigo = data.get('codigo', '')
     resultado = base_datos.validar_y_cambiar_estado(codigo)
     return jsonify(resultado)
+
+
+@app.route('/api/afnd/procesar', methods=['POST'])
+def afnd_procesar():
+    """
+    Corre la cadena completa a través de un AFND nuevo y devuelve
+    el resultado en el formato que ya espera simulador.html:
+    { aceptada, estados_finales, pasos, mensaje }
+    """
+    data = request.get_json() or {}
+    cadena = data.get('cadena', '')
+ 
+    automata = AFND()
+    exito, mensaje, _ = automata.automata_check(cadena)
+ 
+    return jsonify({
+        "aceptada": exito,
+        "mensaje": mensaje,
+        "estados_finales": automata.estados_activos(),
+        "pasos": automata.pasos
+    })
+ 
+ 
+@app.route('/api/afnd/paso', methods=['POST'])
+def afnd_paso():
+    """
+    Avanza UN símbolo. Flask no guarda estado entre peticiones, así que
+    reconstruimos el autómata reproduciendo la cadena desde el inicio
+    hasta 'posicion' (esto es barato: son cadenas de pocos símbolos).
+    """
+    data = request.get_json() or {}
+    cadena = data.get('cadena', '')
+    posicion = int(data.get('posicion', 0))
+ 
+    if posicion < 0 or posicion >= len(cadena):
+        return jsonify({"error": "Posición fuera de rango"}), 400
+ 
+    automata = AFND()
+ 
+    # Reproducimos todo lo anterior al símbolo actual, en silencio
+    for simbolo in cadena[:posicion]:
+        automata.transicion(simbolo)
+    estados_antes = automata.estados_activos()
+ 
+    # Aplicamos el símbolo actual, que es el que de verdad nos interesa mostrar
+    simbolo_actual = cadena[posicion]
+    automata.transicion(simbolo_actual)
+    estados_despues = automata.estados_activos()
+ 
+    es_ultimo_simbolo = (posicion + 1) >= len(cadena)
+    aceptada = None
+    if es_ultimo_simbolo:
+        aceptada = bool(automata.q6 or automata.q7)
+ 
+    return jsonify({
+        "simbolo": simbolo_actual,
+        "estados_siguientes": estados_despues,
+        "transiciones": f"{{{', '.join(estados_antes)}}} --{simbolo_actual}--> {{{', '.join(estados_despues)}}}",
+        "aceptada": aceptada
+    })
 
 
 if __name__ == '__main__':
