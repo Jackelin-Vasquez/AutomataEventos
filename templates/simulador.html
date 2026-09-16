@@ -1,12 +1,16 @@
+```html
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Simulador AFND - Control de Acceso</title>
+    <title>Simulador AFND - EventAccess</title>
 
     <style>
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -14,123 +18,115 @@
         }
 
         body {
-            font-family: "Segoe UI", Arial, sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             background: #f4f7fb;
             color: #263238;
-            min-height: 100vh;
         }
 
-        /* =========================
+        /* ================================
            ENCABEZADO
-        ========================= */
+        ================================= */
 
         .header {
-            background: linear-gradient(135deg, #173b67, #245b91);
+            background: linear-gradient(135deg, #173b67, #286090);
             color: white;
             padding: 25px 40px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 4px 15px rgba(0,0,0,.12);
         }
 
         .header-content {
-            max-width: 1450px;
+            max-width: 1500px;
             margin: auto;
         }
 
         .header h1 {
-            font-size: 30px;
-            font-weight: 700;
-            margin-bottom: 7px;
+            font-size: 29px;
+            margin-bottom: 8px;
         }
 
         .header p {
             font-size: 15px;
-            opacity: 0.9;
+            opacity: .9;
         }
 
-        /* =========================
-           CONTENEDOR PRINCIPAL
-        ========================= */
+        /* ================================
+           CONTENEDOR
+        ================================= */
 
         .container {
-            max-width: 1450px;
-            margin: 30px auto;
+            max-width: 1500px;
+            margin: 25px auto;
             padding: 0 25px;
         }
 
-        /* =========================
-           TARJETA DE CONTROL
-        ========================= */
+        /* ================================
+           PANEL DE CONTROL
+        ================================= */
 
         .control-card {
             background: white;
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 5px 20px rgba(31, 55, 80, 0.08);
-            margin-bottom: 25px;
+            border-radius: 15px;
+            padding: 23px;
+            margin-bottom: 22px;
+            box-shadow: 0 5px 20px rgba(30,50,70,.08);
         }
 
         .control-title {
             font-size: 20px;
-            font-weight: 700;
+            font-weight: bold;
             color: #173b67;
             margin-bottom: 18px;
         }
 
-        .input-row {
+        .control-row {
             display: flex;
             gap: 12px;
+            align-items: end;
             flex-wrap: wrap;
         }
 
-        .input-container {
+        .input-box {
             flex: 1;
             min-width: 280px;
         }
 
-        .input-container label {
+        .input-box label {
             display: block;
             font-size: 14px;
-            font-weight: 600;
-            color: #455a64;
+            font-weight: bold;
+            color: #546e7a;
             margin-bottom: 7px;
         }
 
         #cadena {
             width: 100%;
-            height: 48px;
-            border: 2px solid #d9e2ec;
-            border-radius: 10px;
-            padding: 0 15px;
+            height: 47px;
+            border: 2px solid #d7e0e8;
+            border-radius: 9px;
+            padding: 0 14px;
             font-size: 17px;
             outline: none;
-            transition: 0.2s;
         }
 
         #cadena:focus {
             border-color: #2878c8;
-            box-shadow: 0 0 0 3px rgba(40, 120, 200, 0.12);
         }
-
-        /* =========================
-           BOTONES
-        ========================= */
 
         .buttons {
             display: flex;
-            gap: 10px;
-            align-items: end;
+            gap: 9px;
             flex-wrap: wrap;
         }
 
         button {
+            height: 45px;
+            padding: 0 18px;
             border: none;
-            border-radius: 9px;
-            height: 46px;
-            padding: 0 20px;
-            font-size: 14px;
-            font-weight: 600;
+            border-radius: 8px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            font-weight: bold;
+            font-size: 14px;
+            transition: .2s;
         }
 
         button:hover {
@@ -143,36 +139,62 @@
         }
 
         .btn-step {
-            background: #e8f1fb;
+            background: #e6f0fa;
             color: #245b91;
         }
 
         .btn-reset {
-            background: #eef1f4;
+            background: #edf1f4;
             color: #455a64;
         }
 
         .btn-exit {
-            background: #fbe9e7;
+            background: #fdeaea;
             color: #c62828;
         }
 
-        /* =========================
-           INFORMACIÓN SUPERIOR
-        ========================= */
+        /* ================================
+           ALERTA
+        ================================= */
+
+        .alert {
+            display: none;
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .alert.warning {
+            background: #fff8e1;
+            color: #ef6c00;
+        }
+
+        /* ================================
+           TARJETAS DE ESTADO
+        ================================= */
 
         .status-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 18px;
-            margin-bottom: 25px;
+            gap: 16px;
+            margin-bottom: 22px;
         }
 
         .status-card {
             background: white;
-            border-radius: 14px;
-            padding: 20px;
-            box-shadow: 0 4px 15px rgba(31, 55, 80, 0.07);
+            border-radius: 13px;
+            padding: 18px;
+            box-shadow: 0 4px 15px rgba(30,50,70,.07);
             border-left: 5px solid #2878c8;
         }
 
@@ -189,40 +211,38 @@
         }
 
         .status-label {
-            font-size: 12px;
-            color: #78909c;
+            font-size: 11px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
+            color: #78909c;
+            margin-bottom: 7px;
         }
 
         .status-value {
             font-size: 19px;
-            font-weight: 700;
+            font-weight: bold;
             color: #263238;
-            min-height: 25px;
         }
 
-        /* =========================
-           PANEL PRINCIPAL
-        ========================= */
+        /* ================================
+           GRID PRINCIPAL
+        ================================= */
 
         .main-grid {
             display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 25px;
+            grid-template-columns: 2.1fr 1fr;
+            gap: 22px;
         }
 
         .card {
             background: white;
-            border-radius: 16px;
-            box-shadow: 0 5px 20px rgba(31, 55, 80, 0.08);
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(30,50,70,.08);
             overflow: hidden;
         }
 
         .card-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid #edf1f5;
+            padding: 18px 22px;
+            border-bottom: 1px solid #e8edf2;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -230,7 +250,7 @@
 
         .card-header h2 {
             color: #173b67;
-            font-size: 19px;
+            font-size: 18px;
         }
 
         .card-header span {
@@ -238,104 +258,103 @@
             color: #78909c;
         }
 
-        /* =========================
-           GRAFO DEL AFND
-        ========================= */
+        /* ================================
+           GRAFO
+        ================================= */
 
         .graph-container {
-            width: 100%;
-            height: 560px;
-            position: relative;
+            height: 650px;
             overflow: auto;
             background:
-                linear-gradient(#f1f5f9 1px, transparent 1px),
-                linear-gradient(90deg, #f1f5f9 1px, transparent 1px);
+                linear-gradient(#eef3f7 1px, transparent 1px),
+                linear-gradient(90deg, #eef3f7 1px, transparent 1px);
             background-size: 30px 30px;
         }
 
         svg {
             width: 100%;
-            height: 100%;
-            min-width: 700px;
+            min-width: 1000px;
+            height: 650px;
         }
 
         .transition {
-            stroke: #8ca0b3;
-            stroke-width: 2;
             fill: none;
+            stroke: #8b9aaa;
+            stroke-width: 2.3;
+            marker-end: url(#arrow);
+        }
+
+        .transition.active {
+            stroke: #2878c8;
+            stroke-width: 4;
+            marker-end: url(#arrowActive);
         }
 
         .transition-label {
-            font-size: 15px;
-            font-weight: 600;
             fill: #455a64;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .transition-label.active {
+            fill: #2878c8;
         }
 
         .state {
             fill: white;
             stroke: #55718b;
             stroke-width: 3;
-            transition: all 0.3s ease;
-        }
-
-        .state.accepting {
-            stroke-width: 5;
-        }
-
-        .state-text {
-            font-size: 16px;
-            font-weight: 700;
-            text-anchor: middle;
-            dominant-baseline: middle;
-            fill: #263238;
+            transition: .3s;
         }
 
         .state.active {
             fill: #dff3e4;
             stroke: #2e9d55;
             stroke-width: 5;
-            filter: drop-shadow(0 0 8px rgba(46, 157, 85, 0.35));
         }
 
         .state.current {
-            fill: #fff2d8;
+            fill: #fff0d5;
             stroke: #ef8c22;
             stroke-width: 5;
-            filter: drop-shadow(0 0 8px rgba(239, 140, 34, 0.35));
         }
 
-        .state.accepted {
-            fill: #d7f5df;
+        .state.accept {
+            fill: #e2f5e7;
             stroke: #1b8c42;
-            stroke-width: 6;
+            stroke-width: 5;
         }
 
-        .state.rejected {
+        .state.reject {
             fill: #fde1e1;
             stroke: #d32f2f;
             stroke-width: 5;
         }
 
-        .transition.active-transition {
-            stroke: #2878c8;
-            stroke-width: 4;
+        .state-name {
+            text-anchor: middle;
+            dominant-baseline: middle;
+            font-size: 16px;
+            font-weight: bold;
+            fill: #263238;
         }
 
-        .transition-label.active-label {
-            fill: #2878c8;
-            font-weight: 800;
+        .state-description {
+            text-anchor: middle;
+            font-size: 11px;
+            fill: #607d8b;
         }
 
-        /* =========================
+        /* ================================
            LEYENDA
-        ========================= */
+        ================================= */
 
         .legend {
             display: flex;
-            gap: 20px;
             flex-wrap: wrap;
-            padding: 16px 24px;
-            border-top: 1px solid #edf1f5;
+            gap: 18px;
+            padding: 15px 22px;
+            border-top: 1px solid #e8edf2;
             font-size: 13px;
         }
 
@@ -346,8 +365,8 @@
         }
 
         .legend-circle {
-            width: 16px;
-            height: 16px;
+            width: 15px;
+            height: 15px;
             border-radius: 50%;
             border: 3px solid #55718b;
             background: white;
@@ -359,82 +378,100 @@
         }
 
         .legend-circle.current {
-            background: #fff2d8;
+            background: #fff0d5;
             border-color: #ef8c22;
         }
 
-        .legend-circle.accepted {
-            background: #d7f5df;
+        .legend-circle.accept {
+            background: #e2f5e7;
             border-color: #1b8c42;
         }
 
-        /* =========================
-           PANEL DE INFORMACIÓN
-        ========================= */
+        .legend-circle.reject {
+            background: #fde1e1;
+            border-color: #d32f2f;
+        }
+
+        /* ================================
+           PANEL LATERAL
+        ================================= */
 
         .side-content {
-            padding: 22px;
+            padding: 20px;
         }
 
         .info-box {
             background: #f7f9fc;
-            border-radius: 11px;
-            padding: 16px;
-            margin-bottom: 16px;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
         }
 
         .info-box h3 {
-            font-size: 14px;
             color: #173b67;
+            font-size: 14px;
             margin-bottom: 10px;
         }
 
-        .info-box p {
-            font-size: 14px;
-            color: #546e7a;
-            line-height: 1.6;
-        }
-
-        .states-list {
+        .tags {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 7px;
         }
 
-        .state-tag {
-            background: #e8f1fb;
-            color: #245b91;
+        .tag {
             padding: 6px 10px;
-            border-radius: 7px;
+            border-radius: 6px;
+            background: #e7f0fa;
+            color: #245b91;
             font-size: 13px;
-            font-weight: 600;
+            font-weight: bold;
+        }
+
+        .tag.accept {
+            background: #e4f4e8;
+            color: #23763a;
+        }
+
+        .tag.reject {
+            background: #fdeaea;
+            color: #bd2525;
         }
 
         .transition-list {
-            max-height: 180px;
+            max-height: 220px;
             overflow-y: auto;
         }
 
         .transition-item {
+            padding: 9px;
+            margin-bottom: 6px;
             background: white;
-            border: 1px solid #e5ebf1;
-            border-radius: 8px;
-            padding: 9px 11px;
-            margin-bottom: 7px;
+            border: 1px solid #e1e8ef;
+            border-radius: 7px;
             font-size: 13px;
-            color: #455a64;
         }
 
-        /* =========================
+        .route {
+            padding: 9px;
+            background: white;
+            border-radius: 7px;
+            margin-top: 7px;
+            border: 1px solid #e1e8ef;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        /* ================================
            RESULTADO
-        ========================= */
+        ================================= */
 
         .result-box {
-            padding: 20px;
-            margin: 20px 24px;
-            border-radius: 12px;
-            text-align: center;
             display: none;
+            margin: 18px 22px;
+            padding: 18px;
+            border-radius: 10px;
+            text-align: center;
         }
 
         .result-box.show {
@@ -442,20 +479,20 @@
         }
 
         .result-box.accepted {
-            background: #e6f6ea;
-            border: 1px solid #a7dcb2;
-            color: #1b7a37;
+            background: #e5f5e9;
+            border: 1px solid #acdcb7;
+            color: #1c7837;
         }
 
         .result-box.rejected {
-            background: #fdeaea;
-            border: 1px solid #f0b4b4;
+            background: #fde9e9;
+            border: 1px solid #efb4b4;
             color: #b71c1c;
         }
 
         .result-title {
             font-size: 21px;
-            font-weight: 800;
+            font-weight: bold;
             margin-bottom: 5px;
         }
 
@@ -463,92 +500,64 @@
             font-size: 14px;
         }
 
-        /* =========================
+        /* ================================
            HISTORIAL
-        ========================= */
+        ================================= */
 
         .history-card {
-            margin-top: 25px;
+            margin-top: 22px;
         }
 
         .history {
-            padding: 20px 24px;
-            max-height: 330px;
+            padding: 18px 22px;
+            max-height: 350px;
             overflow-y: auto;
         }
 
         .step {
             display: grid;
-            grid-template-columns: 70px 90px 1fr 1fr;
-            gap: 15px;
-            align-items: center;
-            padding: 13px;
-            margin-bottom: 9px;
-            border: 1px solid #e7edf3;
-            border-radius: 9px;
+            grid-template-columns: 65px 80px 1fr 1fr;
+            gap: 12px;
+            padding: 12px;
+            margin-bottom: 8px;
             background: #fafcfe;
+            border: 1px solid #e2e9ef;
+            border-radius: 8px;
+            align-items: center;
         }
 
         .step-number {
-            font-weight: 800;
             color: #2878c8;
+            font-weight: bold;
         }
 
         .step-symbol {
-            font-weight: 700;
             color: #ef8c22;
+            font-weight: bold;
         }
 
-        .step-states {
+        .step-state {
             font-size: 13px;
-            color: #455a64;
         }
 
-        .step-transition {
-            font-size: 13px;
+        .step-route {
+            font-size: 12px;
             color: #607d8b;
         }
 
-        .empty-history {
+        .empty {
             text-align: center;
-            padding: 30px;
             color: #90a4ae;
+            padding: 25px;
             font-size: 14px;
         }
 
-        /* =========================
-           ALERTA
-        ========================= */
-
-        .alert {
-            display: none;
-            margin-top: 15px;
-            padding: 12px 15px;
-            border-radius: 9px;
-            font-size: 14px;
-        }
-
-        .alert.show {
-            display: block;
-        }
-
-        .alert.error {
-            background: #ffebee;
-            color: #c62828;
-            border: 1px solid #ffcdd2;
-        }
-
-        .alert.warning {
-            background: #fff8e1;
-            color: #ef6c00;
-            border: 1px solid #ffe082;
-        }
-
-        /* =========================
+        /* ================================
            RESPONSIVE
-        ========================= */
+        ================================= */
 
         @media (max-width: 1100px) {
+
             .status-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
@@ -556,871 +565,2130 @@
             .main-grid {
                 grid-template-columns: 1fr;
             }
+
         }
 
         @media (max-width: 700px) {
-            .header {
-                padding: 20px;
-            }
-
-            .header h1 {
-                font-size: 24px;
-            }
 
             .container {
                 padding: 0 12px;
-                margin-top: 20px;
             }
 
             .status-grid {
                 grid-template-columns: 1fr;
             }
 
-            .buttons {
-                width: 100%;
+            .header {
+                padding: 20px;
             }
 
-            button {
-                flex: 1;
-                min-width: 130px;
+            .header h1 {
+                font-size: 23px;
             }
 
             .step {
                 grid-template-columns: 1fr;
-                gap: 5px;
             }
+
         }
+
     </style>
+
 </head>
+
 
 <body>
 
-    <!-- =========================
-         ENCABEZADO
-    ========================= -->
 
-    <header class="header">
-        <div class="header-content">
-            <h1>Simulador de Autómata Finito No Determinista</h1>
-            <p>
-                Sistema de control de acceso a eventos mediante AFND
-            </p>
+<!-- =====================================================
+     ENCABEZADO
+====================================================== -->
+
+<header class="header">
+
+    <div class="header-content">
+
+        <h1>
+            Simulador de Autómata Finito No Determinista
+        </h1>
+
+        <p>
+            EventAccess — Control de acceso a eventos
+        </p>
+
+    </div>
+
+</header>
+
+
+<main class="container">
+
+
+<!-- =====================================================
+     CONTROLES
+====================================================== -->
+
+<section class="control-card">
+
+    <div class="control-title">
+        Evaluación de cadena
+    </div>
+
+    <div class="control-row">
+
+        <div class="input-box">
+
+            <label for="cadena">
+                Cadena de entrada
+            </label>
+
+            <input
+                type="text"
+                id="cadena"
+                placeholder="Ejemplo: qqvva"
+                autocomplete="off"
+            >
+
         </div>
-    </header>
 
 
-    <main class="container">
+        <div class="buttons">
 
-        <!-- =========================
-             CONTROLES
-        ========================= -->
+            <button
+                class="btn-process"
+                onclick="procesarCadena()">
+                Procesar
+            </button>
 
-        <section class="control-card">
+            <button
+                class="btn-step"
+                onclick="avanzarPaso()">
+                Avanzar paso a paso
+            </button>
 
-            <div class="control-title">
-                Evaluación de cadena
+            <button
+                class="btn-reset"
+                onclick="reiniciar()">
+                Reiniciar
+            </button>
+
+            <button
+                class="btn-exit"
+                onclick="salir()">
+                Salir
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <div id="alerta" class="alert"></div>
+
+</section>
+
+
+<!-- =====================================================
+     ESTADO DEL SIMULADOR
+====================================================== -->
+
+<section class="status-grid">
+
+
+    <div class="status-card">
+
+        <div class="status-label">
+            Símbolo actual
+        </div>
+
+        <div
+            class="status-value"
+            id="simboloActual">
+            —
+        </div>
+
+    </div>
+
+
+    <div class="status-card">
+
+        <div class="status-label">
+            Estados activos
+        </div>
+
+        <div
+            class="status-value"
+            id="estadosActivos">
+            {Q0}
+        </div>
+
+    </div>
+
+
+    <div class="status-card">
+
+        <div class="status-label">
+            Paso actual
+        </div>
+
+        <div
+            class="status-value"
+            id="pasoActual">
+            0
+        </div>
+
+    </div>
+
+
+    <div class="status-card">
+
+        <div class="status-label">
+            Estado del autómata
+        </div>
+
+        <div
+            class="status-value"
+            id="estadoAutomata">
+            Esperando ticket
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =====================================================
+     GRAFO + INFORMACIÓN
+====================================================== -->
+
+<section class="main-grid">
+
+
+<!-- =====================================================
+     GRAFO
+====================================================== -->
+
+<div class="card">
+
+    <div class="card-header">
+
+        <h2>
+            Grafo del AFND
+        </h2>
+
+        <span>
+            M = (Q, Σ, δ, q0, F)
+        </span>
+
+    </div>
+
+
+    <div class="graph-container">
+
+        <svg
+            viewBox="0 0 1100 650"
+            xmlns="http://www.w3.org/2000/svg">
+
+
+            <defs>
+
+                <marker
+                    id="arrow"
+                    markerWidth="10"
+                    markerHeight="10"
+                    refX="9"
+                    refY="3"
+                    orient="auto">
+
+                    <path
+                        d="M0,0 L0,6 L9,3 z"
+                        fill="#8b9aaa">
+                    </path>
+
+                </marker>
+
+
+                <marker
+                    id="arrowActive"
+                    markerWidth="10"
+                    markerHeight="10"
+                    refX="9"
+                    refY="3"
+                    orient="auto">
+
+                    <path
+                        d="M0,0 L0,6 L9,3 z"
+                        fill="#2878c8">
+                    </path>
+
+                </marker>
+
+            </defs>
+
+
+            <!-- ==========================================
+                 FLECHA INICIAL Q0 -> Q1
+            =========================================== -->
+
+            <line
+                id="t-q0-q1"
+                x1="40"
+                y1="120"
+                x2="115"
+                y2="120"
+                class="transition"
+            />
+
+            <text
+                x="78"
+                y="105"
+                class="transition-label">
+                q / c
+            </text>
+
+
+            <!-- Q0 -->
+
+            <circle
+                id="state-Q0"
+                cx="150"
+                cy="120"
+                r="38"
+                class="state active"
+            />
+
+            <text
+                x="150"
+                y="115"
+                class="state-name">
+                Q0
+            </text>
+
+            <text
+                x="150"
+                y="138"
+                class="state-description">
+                Esperando ticket
+            </text>
+
+
+            <!-- Q1 -->
+
+            <circle
+                id="state-Q1"
+                cx="300"
+                cy="120"
+                r="38"
+                class="state"
+            />
+
+            <text
+                x="300"
+                y="115"
+                class="state-name">
+                Q1
+            </text>
+
+            <text
+                x="300"
+                y="138"
+                class="state-description">
+                Ticket recibido
+            </text>
+
+
+            <!-- Q0 -> Q1 -->
+
+            <line
+                id="t-q1-q2"
+                x1="338"
+                y1="120"
+                x2="445"
+                y2="120"
+                class="transition"
+                marker-end="url(#arrow)"
+            />
+
+            <text
+                x="390"
+                y="105"
+                class="transition-label">
+                q
+            </text>
+
+
+            <!-- Q1 -> Q3 -->
+
+            <path
+                id="t-q1-q3"
+                d="M300 158 C300 230 450 230 470 190"
+                class="transition"
+                marker-end="url(#arrow)"
+            />
+
+            <text
+                x="365"
+                y="215"
+                class="transition-label">
+                c
+            </text>
+
+
+            <!-- Q2 -->
+
+            <circle
+                id="state-Q2"
+                cx="485"
+                cy="120"
+                r="38"
+                class="state"
+            />
+
+            <text
+                x="485"
+                y="115"
+                class="state-name">
+                Q2
+            </text>
+
+            <text
+                x="485"
+                y="138"
+                class="state-description">
+                Esperando QR
+            </text>
+
+
+            <!-- Q3 -->
+
+            <circle
+                id="state-Q3"
+                cx="485"
+                cy="280"
+                r="38"
+                class="state"
+            />
+
+            <text
+                x="485"
+                y="275"
+                class="state-name">
+                Q3
+            </text>
+
+            <text
+                x="485"
+                y="298"
+                class="state-description">
+                Esperando código
+            </text>
+
+
+            <!-- Q2 -> Q4 -->
+
+            <path
+                id="t-q2-q4"
+                d="M523 120 C600 120 600 210 635 235"
+                class="transition"
+                marker-end="url(#arrow)"
+            />
+
+            <text
+                x="580"
+                y="155"
+                class="transition-label">
+                v / g / i
+            </text>
+
+
+            <!-- Q3 -> Q4 -->
+
+            <path
+                id="t-q3-q4"
+                d="M523 280 C580 280 590 255 635 245"
+                class="transition"
+                marker-end="url(#arrow)"
+            />
+
+            <text
+                x="565"
+                y="275"
+                class="transition-label">
+                v / g / i
+            </text>
+
+
+            <!-- Q4 -->
+
+            <circle
+                id="state-Q4"
+                cx="675"
+                cy="240"
+                r="42"
+                class="state"
+            />
+
+            <text
+                x="675"
+                y="235"
+                class="state-name">
+                Q4
+            </text>
+
+            <text
+                x="675"
+                y="258"
+                class="state-description">
+                Tipo de entrada
+            </text>
+
+
+            <!-- Q4 -> Q5 -->
+
+            <line
+                id="t-q4-q5"
+                x1="717"
+                y1="240"
+                x2="795"
+                y2="240"
+                class="transition"
+                marker-end="url(#arrow)"
+            />
+
+            <text
+                x="755"
+                y="225"
+                class="transition-label">
+                v / g / i
+            </text>
+
+
+            <!-- Q5 -->
+
+            <circle
+                id="state-Q5"
+                cx="835"
+                cy="240"
+                r="42"
+                class="state"
+            />
+
+            <text
+                x="835"
+                y="235"
+                class="state-name">
+                Q5
+            </text>
+
+            <text
+                x="835"
+                y="258"
+                class="state-description">
+                Autorización
+            </text>
+
+
+            <!-- Q5 -> Q6 -->
+
+            <path
+                id="t-q5-q6"
+                d="M835 282 C835 370 735 400 665 420"
+                class="transition"
+                marker-end="url(#arrow)"
+            />
+
+            <text
+                x="780"
+                y="370"
+                class="transition-label">
+                a + g
+            </text>
+
+
+            <!-- Q5 -> Q7 -->
+
+            <path
+                id="t-q5-q7"
+                d="M875 270 C945 310 955 380 900 420"
+                class="transition"
+                marker-end="url(#arrow)"
+            />
+
+            <text
+                x="935"
+                y="350"
+                class="transition-label">
+                a + v / i
+            </text>
+
+
+            <!-- Q5 -> Q8 -->
+
+            <path
+                id="t-q5-q8"
+                d="M870 200 C940 150 965 130 930 105"
+                class="transition"
+                marker-end="url(#arrow)"
+            />
+
+            <text
+                x="940"
+                y="145"
+                class="transition-label">
+                e
+            </text>
+
+
+            <!-- Q6 -->
+
+            <circle
+                id="state-Q6"
+                cx="620"
+                cy="455"
+                r="43"
+                class="state accept"
+            />
+
+            <circle
+                cx="620"
+                cy="455"
+                r="34"
+                class="state accept"
+            />
+
+            <text
+                x="620"
+                y="450"
+                class="state-name">
+                Q6
+            </text>
+
+            <text
+                x="620"
+                y="473"
+                class="state-description">
+                GENERAL autorizado
+            </text>
+
+
+            <!-- Q7 -->
+
+            <circle
+                id="state-Q7"
+                cx="900"
+                cy="455"
+                r="43"
+                class="state accept"
+            />
+
+            <circle
+                cx="900"
+                cy="455"
+                r="34"
+                class="state accept"
+            />
+
+            <text
+                x="900"
+                y="450"
+                class="state-name">
+                Q7
+            </text>
+
+            <text
+                x="900"
+                y="473"
+                class="state-description">
+                VIP autorizado
+            </text>
+
+
+            <!-- Q8 -->
+
+            <circle
+                id="state-Q8"
+                cx="950"
+                cy="80"
+                r="43"
+                class="state reject"
+            />
+
+            <text
+                x="950"
+                y="75"
+                class="state-name">
+                Q8
+            </text>
+
+            <text
+                x="950"
+                y="98"
+                class="state-description">
+                Acceso rechazado
+            </text>
+
+
+            <!-- Q9 -->
+
+            <circle
+                id="state-Q9"
+                cx="150"
+                cy="500"
+                r="43"
+                class="state"
+            />
+
+            <text
+                x="150"
+                y="495"
+                class="state-name">
+                Q9
+            </text>
+
+            <text
+                x="150"
+                y="518"
+                class="state-description">
+                Cierre
+            </text>
+
+
+            <!-- e puede producir rechazo -->
+
+            <path
+                id="t-q0-q8"
+                d="M150 158 C100 230 100 390 900 80"
+                class="transition"
+                marker-end="url(#arrow)"
+            />
+
+            <text
+                x="100"
+                y="300"
+                class="transition-label">
+                e
+            </text>
+
+
+        </svg>
+
+    </div>
+
+
+    <!-- LEYENDA -->
+
+    <div class="legend">
+
+        <div class="legend-item">
+            <div class="legend-circle"></div>
+            Estado
+        </div>
+
+        <div class="legend-item">
+            <div class="legend-circle active"></div>
+            Estado activo
+        </div>
+
+        <div class="legend-item">
+            <div class="legend-circle current"></div>
+            Estado actual
+        </div>
+
+        <div class="legend-item">
+            <div class="legend-circle accept"></div>
+            Estado de aceptación
+        </div>
+
+        <div class="legend-item">
+            <div class="legend-circle reject"></div>
+            Estado de rechazo
+        </div>
+
+    </div>
+
+
+    <!-- RESULTADO -->
+
+    <div
+        id="resultado"
+        class="result-box">
+
+        <div
+            id="resultadoTitulo"
+            class="result-title">
+        </div>
+
+        <div
+            id="resultadoDescripcion"
+            class="result-description">
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     INFORMACIÓN LATERAL
+====================================================== -->
+
+<div class="card">
+
+    <div class="card-header">
+
+        <h2>
+            Información del AFND
+        </h2>
+
+        <span>
+            Configuración
+        </span>
+
+    </div>
+
+
+    <div class="side-content">
+
+
+        <!-- ALFABETO -->
+
+        <div class="info-box">
+
+            <h3>
+                Alfabeto Σ
+            </h3>
+
+            <div class="tags">
+
+                <span class="tag">q</span>
+                <span class="tag">g</span>
+                <span class="tag">v</span>
+                <span class="tag">i</span>
+                <span class="tag">c</span>
+                <span class="tag">a</span>
+                <span class="tag">e</span>
+
             </div>
 
-            <div class="input-row">
+        </div>
 
-                <div class="input-container">
 
-                    <label for="cadena">
-                        Ingrese la cadena a evaluar
-                    </label>
+        <!-- ESTADO INICIAL -->
 
-                    <input
-                        type="text"
-                        id="cadena"
-                        placeholder="Ejemplo: qqvva"
-                        autocomplete="off"
-                    >
+        <div class="info-box">
 
-                </div>
+            <h3>
+                Estado inicial
+            </h3>
 
+            <div class="tags">
 
-                <div class="buttons">
-
-                    <button
-                        class="btn-process"
-                        onclick="procesarCadena()">
-                        Procesar
-                    </button>
-
-                    <button
-                        class="btn-step"
-                        onclick="avanzarPaso()">
-                        Avanzar paso a paso
-                    </button>
-
-                    <button
-                        class="btn-reset"
-                        onclick="reiniciar()">
-                        Reiniciar
-                    </button>
-
-                    <button
-                        class="btn-exit"
-                        onclick="salir()">
-                        Salir
-                    </button>
-
-                </div>
-
-            </div>
-
-            <div id="alerta" class="alert"></div>
-
-        </section>
-
-
-        <!-- =========================
-             ESTADO ACTUAL
-        ========================= -->
-
-        <section class="status-grid">
-
-            <div class="status-card">
-                <div class="status-label">
-                    Símbolo actual
-                </div>
-
-                <div
-                    class="status-value"
-                    id="simboloActual">
-                    —
-                </div>
-            </div>
-
-
-            <div class="status-card">
-                <div class="status-label">
-                    Estados activos
-                </div>
-
-                <div
-                    class="status-value"
-                    id="estadosActivos">
-                    {q0}
-                </div>
-            </div>
-
-
-            <div class="status-card">
-                <div class="status-label">
-                    Paso actual
-                </div>
-
-                <div
-                    class="status-value"
-                    id="pasoActual">
-                    0
-                </div>
-            </div>
-
-
-            <div class="status-card">
-                <div class="status-label">
-                    Estado del autómata
-                </div>
-
-                <div
-                    class="status-value"
-                    id="estadoAutomata">
-                    Esperando
-                </div>
-            </div>
-
-        </section>
-
-
-        <!-- =========================
-             GRAFO + INFORMACIÓN
-        ========================= -->
-
-        <section class="main-grid">
-
-
-            <!-- GRAFO -->
-
-            <div class="card">
-
-                <div class="card-header">
-
-                    <h2>
-                        Representación gráfica del AFND
-                    </h2>
-
-                    <span>
-                        Estados y transiciones
-                    </span>
-
-                </div>
-
-
-                <div class="graph-container">
-
-
-                    <svg
-                        id="automataGraph"
-                        viewBox="0 0 980 560"
-                        xmlns="http://www.w3.org/2000/svg">
-
-                        <defs>
-
-                            <marker
-                                id="arrow"
-                                markerWidth="10"
-                                markerHeight="10"
-                                refX="9"
-                                refY="3"
-                                orient="auto"
-                                markerUnits="strokeWidth">
-
-                                <path
-                                    d="M0,0 L0,6 L9,3 z"
-                                    fill="#8ca0b3">
-                                </path>
-
-                            </marker>
-
-                            <marker
-                                id="arrowActive"
-                                markerWidth="10"
-                                markerHeight="10"
-                                refX="9"
-                                refY="3"
-                                orient="auto"
-                                markerUnits="strokeWidth">
-
-                                <path
-                                    d="M0,0 L0,6 L9,3 z"
-                                    fill="#2878c8">
-                                </path>
-
-                            </marker>
-
-                        </defs>
-
-
-                       <!-- flecha de arranque hacia Q0 -->
-                        <line x1="20" y1="280" x2="65" y2="280" class="transition" marker-end="url(#arrow)"></line>
- 
-                        <!-- Q0 -> Q1 -->
-                        <line id="edge-Q0-Q1" x1="105" y1="280" x2="195" y2="280" class="transition" marker-end="url(#arrow)"></line>
-                        <text x="150" y="265" class="transition-label" text-anchor="middle">q, c</text>
- 
-                        <!-- Q1 -> Q2 (arriba) -->
-                        <line id="edge-Q1-Q2" x1="230" y1="255" x2="330" y2="150" class="transition" marker-end="url(#arrow)"></line>
-                        <text x="255" y="185" class="transition-label">q</text>
- 
-                        <!-- Q1 -> Q3 (abajo) -->
-                        <line id="edge-Q1-Q3" x1="230" y1="305" x2="330" y2="410" class="transition" marker-end="url(#arrow)"></line>
-                        <text x="255" y="375" class="transition-label">c</text>
- 
-                        <!-- Q2 -> Q4 -->
-                        <line id="edge-Q2-Q4" x1="365" y1="150" x2="465" y2="255" class="transition" marker-end="url(#arrow)"></line>
-                        <text x="440" y="185" class="transition-label">v, g, i</text>
- 
-                        <!-- Q3 -> Q4 -->
-                        <line id="edge-Q3-Q4" x1="365" y1="410" x2="465" y2="305" class="transition" marker-end="url(#arrow)"></line>
-                        <text x="440" y="375" class="transition-label">v, g, i</text>
- 
-                        <!-- Q4 -> Q5 -->
-                        <line id="edge-Q4-Q5" x1="530" y1="280" x2="620" y2="280" class="transition" marker-end="url(#arrow)"></line>
-                        <text x="575" y="265" class="transition-label" text-anchor="middle">v, g, i</text>
- 
-                        <!-- Q5 -> Q6 (arriba, general) -->
-                        <line id="edge-Q5-Q6" x1="655" y1="255" x2="755" y2="150" class="transition" marker-end="url(#arrow)"></line>
-                        <text x="670" y="185" class="transition-label">a (general)</text>
- 
-                        <!-- Q5 -> Q7 (abajo, vip/invitación) -->
-                        <line id="edge-Q5-Q7" x1="655" y1="305" x2="755" y2="410" class="transition" marker-end="url(#arrow)"></line>
-                        <text x="655" y="375" class="transition-label">a (vip/invitación)</text>
- 
-                        <!-- cualquier estado -> Q8, representada desde Q4/Q5 (las más comunes) -->
-                        <line id="edge-Q4-Q8" x1="490" y1="305" x2="620" y2="460" class="transition" stroke-dasharray="5,4" marker-end="url(#arrow)"></line>
-                        <line id="edge-Q5-Q8" x1="620" y1="305" x2="620" y2="440" class="transition" stroke-dasharray="5,4" marker-end="url(#arrow)"></line>
-                        <text x="560" y="430" class="transition-label">e</text>
- 
-                        <!-- ESTADOS -->
-                        <circle id="state-Q0" cx="85" cy="280" r="32" class="state"></circle>
-                        <text x="85" y="280" class="state-text">Q0</text>
- 
-                        <circle id="state-Q1" cx="212" cy="280" r="32" class="state"></circle>
-                        <text x="212" y="280" class="state-text">Q1</text>
- 
-                        <circle id="state-Q2" cx="347" cy="130" r="32" class="state"></circle>
-                        <text x="347" y="130" class="state-text">Q2</text>
- 
-                        <circle id="state-Q3" cx="347" cy="430" r="32" class="state"></circle>
-                        <text x="347" y="430" class="state-text">Q3</text>
- 
-                        <circle id="state-Q4" cx="497" cy="280" r="32" class="state"></circle>
-                        <text x="497" y="280" class="state-text">Q4</text>
- 
-                        <circle id="state-Q5" cx="637" cy="280" r="32" class="state"></circle>
-                        <text x="637" y="280" class="state-text">Q5</text>
- 
-                        <circle id="state-Q6" cx="785" cy="130" r="32" class="state accepting"></circle>
-                        <circle cx="785" cy="130" r="25" class="state accepting"></circle>
-                        <text x="785" y="130" class="state-text">Q6</text>
- 
-                        <circle id="state-Q7" cx="785" cy="430" r="32" class="state accepting"></circle>
-                        <circle cx="785" cy="430" r="25" class="state accepting"></circle>
-                        <text x="785" y="430" class="state-text">Q7</text>
- 
-                        <circle id="state-Q8" cx="620" cy="490" r="32" class="state"></circle>
-                        <text x="620" y="490" class="state-text">Q8</text>
- 
-
-
-                    </svg>
-
-                </div>
-
-
-                <!-- LEYENDA -->
-
-                <div class="legend">
-
-                    <div class="legend-item">
-
-                        <div class="legend-circle"></div>
-
-                        <span>
-                            Estado
-                        </span>
-
-                    </div>
-
-
-                    <div class="legend-item">
-
-                        <div class="legend-circle active"></div>
-
-                        <span>
-                            Estado activo
-                        </span>
-
-                    </div>
-
-
-                    <div class="legend-item">
-
-                        <div class="legend-circle current"></div>
-
-                        <span>
-                            Estado actual
-                        </span>
-
-                    </div>
-
-
-                    <div class="legend-item">
-
-                        <div class="legend-circle accepted"></div>
-
-                        <span>
-                            Estado de aceptación
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                <!-- RESULTADO -->
-
-                <div
-                    id="resultado"
-                    class="result-box">
-
-                    <div
-                        id="resultadoTitulo"
-                        class="result-title">
-                    </div>
-
-                    <div
-                        id="resultadoDescripcion"
-                        class="result-description">
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- PANEL LATERAL -->
-
-            <div class="card">
-
-                <div class="card-header">
-
-                    <h2>
-                        Información
-                    </h2>
-
-                    <span>
-                        Simulación
-                    </span>
-
-                </div>
-
-
-                <div class="side-content">
-
-
-                    <!-- ALFABETO -->
-
-                    <div class="info-box">
-
-                        <h3>
-                            Alfabeto
-                        </h3>
-
-                        <div
-                            id="alfabeto"
-                            class="states-list">
-
-                            <span class="state-tag">q</span>
-                            <span class="state-tag">c</span>
-                            <span class="state-tag">v</span>
-                            <span class="state-tag">g</span>
-                            <span class="state-tag">a</span>
-                            <span class="state-tag">e</span>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- ESTADOS ACTIVOS -->
-
-                    <div class="info-box">
-
-                        <h3>
-                            Conjunto de estados activos
-                        </h3>
-
-                        <div
-                            id="listaEstados"
-                            class="states-list">
-
-                            <span class="state-tag">
-                                q0
-                            </span>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- TRANSICIONES -->
-
-                    <div class="info-box">
-
-                        <h3>
-                            Transiciones realizadas
-                        </h3>
-
-                        <div
-                            id="listaTransiciones"
-                            class="transition-list">
-
-                            <div class="empty-history">
-                                Aún no se han realizado transiciones.
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- RUTAS -->
-
-                    <div class="info-box">
-                        <h3>Mensaje del motor AFND</h3>
-                        <div id="mensajeMotor">
-                            <p>El mensaje que devuelve <code>afnd.py</code> aparecerá aquí al procesar una cadena.</p>
-                        </div>
-                    </div>
-
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-        <!-- =========================
-             HISTORIAL
-        ========================= -->
-
-        <section class="card history-card">
-
-            <div class="card-header">
-
-                <h2>
-                    Historial de simulación
-                </h2>
-
-                <span>
-                    Seguimiento paso a paso
+                <span class="tag">
+                    Q0
                 </span>
 
             </div>
 
+        </div>
+
+
+        <!-- ESTADOS DE ACEPTACIÓN -->
+
+        <div class="info-box">
+
+            <h3>
+                Estados de aceptación
+            </h3>
+
+            <div class="tags">
+
+                <span class="tag accept">
+                    Q6 - General
+                </span>
+
+                <span class="tag accept">
+                    Q7 - VIP
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- ESTADO DE RECHAZO -->
+
+        <div class="info-box">
+
+            <h3>
+                Estado de rechazo
+            </h3>
+
+            <div class="tags">
+
+                <span class="tag reject">
+                    Q8
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- TRANSICIONES -->
+
+        <div class="info-box">
+
+            <h3>
+                Transiciones realizadas
+            </h3>
 
             <div
-                id="historial"
-                class="history">
+                id="listaTransiciones"
+                class="transition-list">
 
-                <div class="empty-history">
-                    Ingrese una cadena y presione
-                    "Procesar" o "Avanzar paso a paso".
+                <div class="empty">
+                    No hay transiciones todavía.
                 </div>
 
             </div>
 
-        </section>
-
-    </main>
+        </div>
 
 
-    <script>
+        <!-- RUTAS -->
 
-        /*
-        ============================================================
-        VARIABLES DEL SIMULADOR
-        ============================================================
-        */
+        <div class="info-box">
 
-        let cadena = "";
-        let posicion = 0;
+            <h3>
+                Ruta recorrida
+            </h3>
 
-        let estadosActivos = ["q0"];
+            <div id="rutas">
 
-        let historial = [];
+                <div class="route">
+                    Q0
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</section>
 
 
-                const TODOS_LOS_ESTADOS = ["Q0", "Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7", "Q8"];
-        const TODAS_LAS_ARISTAS = [
-            "edge-Q0-Q1", "edge-Q1-Q2", "edge-Q1-Q3",
-            "edge-Q2-Q4", "edge-Q3-Q4", "edge-Q4-Q5",
-            "edge-Q5-Q6", "edge-Q5-Q7", "edge-Q4-Q8", "edge-Q5-Q8"
-        ];
- 
-        function mostrarAlerta(mensaje, tipo = "error") {
-            const alerta = document.getElementById("alerta");
-            alerta.textContent = mensaje;
-            alerta.className = "alert show " + tipo;
+<!-- =====================================================
+     HISTORIAL
+====================================================== -->
+
+<section class="card history-card">
+
+    <div class="card-header">
+
+        <h2>
+            Historial de simulación
+        </h2>
+
+        <span>
+            Pasos ejecutados
+        </span>
+
+    </div>
+
+
+    <div
+        id="historial"
+        class="history">
+
+        <div class="empty">
+            Ingrese una cadena para comenzar la simulación.
+        </div>
+
+    </div>
+
+</section>
+
+
+</main>
+
+
+<script>
+
+
+/* =========================================================
+   CONFIGURACIÓN DEL AFND
+========================================================= */
+
+
+const ALFABETO = [
+    "q",
+    "g",
+    "v",
+    "i",
+    "c",
+    "a",
+    "e"
+];
+
+
+let cadena = "";
+
+let posicion = 0;
+
+let estadosActivos = ["Q0"];
+
+let historial = [];
+
+let tipoDetectado = null;
+
+
+/* =========================================================
+   TABLA DE TRANSICIONES
+========================================================= */
+
+
+const TRANSICIONES = {
+
+    Q0: {
+        q: ["Q1"],
+        c: ["Q1"],
+        e: ["Q8"]
+    },
+
+    Q1: {
+        q: ["Q2"],
+        c: ["Q3"],
+        e: ["Q8"]
+    },
+
+    Q2: {
+        v: ["Q4"],
+        g: ["Q4"],
+        i: ["Q4"],
+        e: ["Q8"]
+    },
+
+    Q3: {
+        v: ["Q4"],
+        g: ["Q4"],
+        i: ["Q4"],
+        e: ["Q8"]
+    },
+
+    Q4: {
+        v: ["Q5"],
+        g: ["Q5"],
+        i: ["Q5"],
+        e: ["Q8"]
+    },
+
+    Q5: {
+        a: ["Q6", "Q7"],
+        e: ["Q8"]
+    },
+
+    Q6: {},
+
+    Q7: {},
+
+    Q8: {},
+
+    Q9: {}
+
+};
+
+
+/* =========================================================
+   MOSTRAR ALERTA
+========================================================= */
+
+
+function mostrarAlerta(mensaje, tipo = "error") {
+
+    const alerta =
+        document.getElementById("alerta");
+
+    alerta.textContent = mensaje;
+
+    alerta.className =
+        "alert show " + tipo;
+
+}
+
+
+function ocultarAlerta() {
+
+    const alerta =
+        document.getElementById("alerta");
+
+    alerta.className = "alert";
+
+    alerta.textContent = "";
+
+}
+
+
+/* =========================================================
+   VALIDAR CADENA
+========================================================= */
+
+
+function validarCadena(valor) {
+
+    if (valor === "") {
+
+        mostrarAlerta(
+            "Debe ingresar una cadena."
+        );
+
+        return false;
+
+    }
+
+
+    for (let i = 0; i < valor.length; i++) {
+
+        if (!ALFABETO.includes(valor[i])) {
+
+            mostrarAlerta(
+                "El símbolo '" +
+                valor[i] +
+                "' no pertenece al alfabeto."
+            );
+
+            return false;
+
         }
- 
-        function ocultarAlerta() {
-            const alerta = document.getElementById("alerta");
-            alerta.className = "alert";
-            alerta.textContent = "";
-        }
- 
-        function actualizarEstados() {
-            const elemento = document.getElementById("estadosActivos");
-            elemento.textContent = "{" + estadosActivos.join(", ") + "}";
- 
-            const lista = document.getElementById("listaEstados");
-            lista.innerHTML = "";
- 
-            estadosActivos.forEach(function (estado) {
-                const span = document.createElement("span");
-                span.className = "state-tag";
-                span.textContent = estado;
-                lista.appendChild(span);
-            });
-        }
- 
-        function limpiarGrafo() {
-            TODOS_LOS_ESTADOS.forEach(function (estado) {
-                const elemento = document.getElementById("state-" + estado);
-                if (elemento) {
-                    elemento.classList.remove("active", "current", "accepted", "rejected");
+
+    }
+
+    return true;
+
+}
+
+
+/* =========================================================
+   CALCULAR SIGUIENTES ESTADOS
+========================================================= */
+
+
+function obtenerSiguientesEstados(
+    estados,
+    simbolo
+) {
+
+    let siguientes = [];
+
+    for (const estado of estados) {
+
+        if (
+            TRANSICIONES[estado] &&
+            TRANSICIONES[estado][simbolo]
+        ) {
+
+            for (
+                const destino
+                of TRANSICIONES[estado][simbolo]
+            ) {
+
+                if (!siguientes.includes(destino)) {
+
+                    siguientes.push(destino);
+
                 }
-            });
- 
-            TODAS_LAS_ARISTAS.forEach(function (id) {
-                const elemento = document.getElementById(id);
-                if (elemento) {
-                    elemento.classList.remove("active-transition");
-                }
-            });
+
+            }
+
         }
- 
-        function resaltarEstados() {
-            limpiarGrafo();
-            estadosActivos.forEach(function (estado) {
-                const elemento = document.getElementById("state-" + estado);
+
+    }
+
+    return siguientes;
+
+}
+
+
+/* =========================================================
+   DESCRIPCIÓN DEL ESTADO
+========================================================= */
+
+
+function descripcionEstado(estado) {
+
+    const descripciones = {
+
+        Q0: "Esperando ticket",
+
+        Q1: "Ticket recibido",
+
+        Q2: "Esperando QR / entrada digital",
+
+        Q3: "Esperando código / entrada manual",
+
+        Q4: "Verificando tipo de entrada",
+
+        Q5: "Verificando autorización",
+
+        Q6: "Acceso GENERAL autorizado",
+
+        Q7: "Acceso VIP autorizado",
+
+        Q8: "Acceso rechazado",
+
+        Q9: "Cierre del programa"
+
+    };
+
+    return descripciones[estado] || estado;
+
+}
+
+
+/* =========================================================
+   ACTUALIZAR ESTADOS
+========================================================= */
+
+
+function actualizarEstados() {
+
+    document.getElementById(
+        "estadosActivos"
+    ).textContent =
+        "{" + estadosActivos.join(", ") + "}";
+
+
+    const estados = [
+        "Q0",
+        "Q1",
+        "Q2",
+        "Q3",
+        "Q4",
+        "Q5",
+        "Q6",
+        "Q7",
+        "Q8",
+        "Q9"
+    ];
+
+
+    estados.forEach(function(estado) {
+
+        const elemento =
+            document.getElementById(
+                "state-" + estado
+            );
+
+        if (!elemento) {
+            return;
+        }
+
+        elemento.classList.remove(
+            "active",
+            "current",
+            "reject"
+        );
+
+
+        if (estadosActivos.includes(estado)) {
+
+            elemento.classList.add("active");
+
+        }
+
+    });
+
+
+    estadosActivos.forEach(function(estado) {
+
+        const elemento =
+            document.getElementById(
+                "state-" + estado
+            );
+
+        if (elemento) {
+
+            elemento.classList.add("current");
+
+        }
+
+    });
+
+}
+
+
+/* =========================================================
+   LIMPIAR TRANSICIONES
+========================================================= */
+
+
+function limpiarTransiciones() {
+
+    const ids = [
+
+        "t-q0-q1",
+        "t-q1-q2",
+        "t-q1-q3",
+        "t-q2-q4",
+        "t-q3-q4",
+        "t-q4-q5",
+        "t-q5-q6",
+        "t-q5-q7",
+        "t-q5-q8",
+        "t-q0-q8"
+
+    ];
+
+
+    ids.forEach(function(id) {
+
+        const elemento =
+            document.getElementById(id);
+
+        if (elemento) {
+
+            elemento.classList.remove("active");
+
+        }
+
+    });
+
+}
+
+
+/* =========================================================
+   RESALTAR TRANSICIÓN
+========================================================= */
+
+
+function resaltarTransicion(
+    anteriores,
+    simbolo,
+    siguientes
+) {
+
+    limpiarTransiciones();
+
+
+    for (const origen of anteriores) {
+
+        const destinos =
+            TRANSICIONES[origen] &&
+            TRANSICIONES[origen][simbolo];
+
+
+        if (!destinos) {
+            continue;
+        }
+
+
+        for (const destino of destinos) {
+
+            let id = null;
+
+
+            if (
+                origen === "Q0" &&
+                destino === "Q1"
+            ) {
+
+                id = "t-q0-q1";
+
+            }
+
+            else if (
+                origen === "Q1" &&
+                destino === "Q2"
+            ) {
+
+                id = "t-q1-q2";
+
+            }
+
+            else if (
+                origen === "Q1" &&
+                destino === "Q3"
+            ) {
+
+                id = "t-q1-q3";
+
+            }
+
+            else if (
+                origen === "Q2" &&
+                destino === "Q4"
+            ) {
+
+                id = "t-q2-q4";
+
+            }
+
+            else if (
+                origen === "Q3" &&
+                destino === "Q4"
+            ) {
+
+                id = "t-q3-q4";
+
+            }
+
+            else if (
+                origen === "Q4" &&
+                destino === "Q5"
+            ) {
+
+                id = "t-q4-q5";
+
+            }
+
+            else if (
+                origen === "Q5" &&
+                destino === "Q6"
+            ) {
+
+                id = "t-q5-q6";
+
+            }
+
+            else if (
+                origen === "Q5" &&
+                destino === "Q7"
+            ) {
+
+                id = "t-q5-q7";
+
+            }
+
+            else if (
+                origen === "Q5" &&
+                destino === "Q8"
+            ) {
+
+                id = "t-q5-q8";
+
+            }
+
+
+            if (id) {
+
+                const elemento =
+                    document.getElementById(id);
+
                 if (elemento) {
                     elemento.classList.add("active");
                 }
-            });
+
+            }
+
         }
- 
-        function agregarHistorial(numero, simbolo, anteriores, siguientes, transicion) {
-            const historialElemento = document.getElementById("historial");
- 
-            if (historial.length === 0) {
-                historialElemento.innerHTML = "";
-            }
- 
-            const div = document.createElement("div");
-            div.className = "step";
-            div.innerHTML = `
-                <div class="step-number">Paso ${numero}</div>
-                <div class="step-symbol">Símbolo: ${simbolo}</div>
-                <div class="step-states">${anteriores.join(", ")} → ${siguientes.join(", ")}</div>
-                <div class="step-transition">${transicion}</div>
-            `;
- 
-            historialElemento.appendChild(div);
-            historialElemento.scrollTop = historialElemento.scrollHeight;
+
+    }
+
+}
+
+
+/* =========================================================
+   AGREGAR HISTORIAL
+========================================================= */
+
+
+function agregarHistorial(
+    numero,
+    simbolo,
+    anteriores,
+    siguientes
+) {
+
+    const contenedor =
+        document.getElementById(
+            "historial"
+        );
+
+
+    if (historial.length === 0) {
+
+        contenedor.innerHTML = "";
+
+    }
+
+
+    const div =
+        document.createElement("div");
+
+    div.className = "step";
+
+
+    let transicion =
+        anteriores.join(", ") +
+        " -- " +
+        simbolo +
+        " --> " +
+        siguientes.join(", ");
+
+
+    div.innerHTML = `
+
+        <div class="step-number">
+            Paso ${numero}
+        </div>
+
+        <div class="step-symbol">
+            ${simbolo}
+        </div>
+
+        <div class="step-state">
+            ${anteriores.join(", ")}
+            →
+            ${siguientes.join(", ")}
+        </div>
+
+        <div class="step-route">
+            ${transicion}
+        </div>
+
+    `;
+
+
+    contenedor.appendChild(div);
+
+}
+
+
+/* =========================================================
+   AGREGAR TRANSICIÓN
+========================================================= */
+
+
+function agregarTransicion(
+    texto
+) {
+
+    const lista =
+        document.getElementById(
+            "listaTransiciones"
+        );
+
+
+    if (historial.length === 1) {
+
+        lista.innerHTML = "";
+
+    }
+
+
+    const div =
+        document.createElement("div");
+
+    div.className =
+        "transition-item";
+
+    div.textContent = texto;
+
+    lista.appendChild(div);
+
+}
+
+
+/* =========================================================
+   ACTUALIZAR RUTA
+========================================================= */
+
+
+function actualizarRuta() {
+
+    const rutas =
+        document.getElementById(
+            "rutas"
+        );
+
+
+    let ruta = "Q0";
+
+
+    historial.forEach(function(paso) {
+
+        if (
+            paso.siguientes.length > 0
+        ) {
+
+            ruta +=
+                " → " +
+                paso.siguientes.join(" / ");
+
         }
- 
-        function agregarTransicion(texto) {
-            const lista = document.getElementById("listaTransiciones");
- 
-            if (historial.length === 1) {
-                lista.innerHTML = "";
-            }
- 
-            const div = document.createElement("div");
-            div.className = "transition-item";
-            div.textContent = texto;
-            lista.appendChild(div);
-        }
- 
-        function mostrarMensajeMotor(mensaje) {
-            const contenedor = document.getElementById("mensajeMotor");
-            contenedor.innerHTML = `<p>${mensaje}</p>`;
-        }
- 
-        // ============================================================
-        // PROCESAR CADENA COMPLETA -> POST /api/afnd/procesar
-        // ============================================================
- 
-        async function procesarCadena() {
-            ocultarAlerta();
- 
-            const campo = document.getElementById("cadena");
-            cadena = campo.value.trim().toLowerCase();
- 
-            if (cadena === "") {
-                mostrarAlerta("Debe ingresar una cadena para procesar.");
-                return;
-            }
- 
-            reiniciar(false);
- 
-            try {
-                const respuesta = await fetch("/api/afnd/procesar", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ cadena: cadena })
-                });
- 
-                if (!respuesta.ok) {
-                    throw new Error("No fue posible procesar la cadena.");
-                }
- 
-                const datos = await respuesta.json();
-                mostrarResultadoServidor(datos);
- 
-                // Reconstruimos también el historial paso a paso, usando los
-                // "pasos" que ya trae afnd.py en su lista self.pasos.
-                if (Array.isArray(datos.pasos)) {
-                    datos.pasos.forEach(function (paso, i) {
-                        agregarHistorial(i + 1, cadena[i] ?? "?", [], [], paso);
-                        agregarTransicion(paso);
-                    });
-                }
- 
-                document.getElementById("pasoActual").textContent = cadena.length;
-                document.getElementById("simboloActual").textContent = cadena[cadena.length - 1];
-            }
-            catch (error) {
-                mostrarAlerta("No se pudo conectar con el motor AFND. Verifique que el servidor esté ejecutándose.");
-            }
-        }
- 
-        function mostrarResultadoServidor(datos) {
-            if (!datos) {
-                return;
-            }
- 
-            if (datos.mensaje) {
-                mostrarMensajeMotor(datos.mensaje);
-            }
- 
-            if (datos.estados_finales) {
-                estadosActivos = datos.estados_finales;
-                actualizarEstados();
-                resaltarEstados();
-            }
- 
-            if (datos.aceptada === true) {
-                mostrarResultado(true, "CADENA ACEPTADA", "El AFND llegó a un estado de aceptación (Q6 o Q7).");
-            }
-            else if (datos.aceptada === false) {
-                mostrarResultado(false, "CADENA RECHAZADA", "El AFND no llegó a un estado de aceptación.");
-            }
-        }
- 
-        // ============================================================
-        // AVANZAR PASO A PASO -> POST /api/afnd/paso
-        // ============================================================
- 
-        async function avanzarPaso() {
-            ocultarAlerta();
- 
-            if (document.getElementById("cadena").value.trim() === "") {
-                mostrarAlerta("Primero debe ingresar una cadena.");
-                return;
-            }
- 
-            if (cadena === "") {
-                cadena = document.getElementById("cadena").value.trim().toLowerCase();
-            }
- 
-            if (posicion >= cadena.length) {
-                mostrarAlerta("La cadena ya fue procesada.", "warning");
-                return;
-            }
- 
-            const simbolo = cadena[posicion];
-            document.getElementById("simboloActual").textContent = simbolo;
- 
-            try {
-                const respuesta = await fetch("/api/afnd/paso", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ cadena: cadena, posicion: posicion, estados: estadosActivos })
-                });
- 
-                if (!respuesta.ok) {
-                    throw new Error();
-                }
- 
-                const datos = await respuesta.json();
- 
-                const anteriores = [...estadosActivos];
-                const siguientes = datos.estados_siguientes || [];
-                const transicion = datos.transiciones || "Transición procesada";
- 
-                estadosActivos = siguientes;
- 
-                agregarHistorial(posicion + 1, simbolo, anteriores, siguientes, transicion);
-                agregarTransicion(transicion);
- 
-                posicion++;
-                document.getElementById("pasoActual").textContent = posicion;
- 
-                actualizarEstados();
-                resaltarEstados();
- 
-                if (posicion >= cadena.length) {
-                    if (datos.aceptada === true) {
-                        mostrarResultado(true, "CADENA ACEPTADA", "Existe al menos una ruta que llega a un estado final.");
-                    }
-                    else if (datos.aceptada === false) {
-                        mostrarResultado(false, "CADENA RECHAZADA", "Ninguna ruta llega a un estado final.");
-                    }
-                }
-            }
-            catch (error) {
-                mostrarAlerta("No fue posible ejecutar el paso del AFND.");
-            }
-        }
- 
-        function mostrarResultado(aceptada, titulo, descripcion) {
-            const resultado = document.getElementById("resultado");
-            const tituloElemento = document.getElementById("resultadoTitulo");
-            const descripcionElemento = document.getElementById("resultadoDescripcion");
- 
-            resultado.className = "result-box show " + (aceptada ? "accepted" : "rejected");
-            tituloElemento.textContent = titulo;
-            descripcionElemento.textContent = descripcion;
- 
-            document.getElementById("estadoAutomata").textContent = aceptada ? "Aceptada" : "Rechazada";
- 
-            estadosActivos.forEach(function (estado) {
-                const elemento = document.getElementById("state-" + estado);
-                if (elemento) {
-                    elemento.classList.remove("active");
-                    elemento.classList.add(aceptada ? "accepted" : "rejected");
-                }
-            });
-        }
- 
-        function reiniciar(limpiarCampo = true) {
-            if (limpiarCampo) {
-                document.getElementById("cadena").value = "";
-            }
- 
+
+    });
+
+
+    rutas.innerHTML = `
+
+        <div class="route">
+            ${ruta}
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   AVANZAR UN PASO
+========================================================= */
+
+
+function avanzarPaso() {
+
+    ocultarAlerta();
+
+
+    const campo =
+        document.getElementById(
+            "cadena"
+        );
+
+
+    if (cadena === "") {
+
+        cadena =
+            campo.value
+            .trim()
+            .toLowerCase();
+
+
+        if (!validarCadena(cadena)) {
+
             cadena = "";
-            posicion = 0;
-            estadosActivos = ["Q0"];
-            historial = [];
- 
-            document.getElementById("simboloActual").textContent = "—";
-            document.getElementById("pasoActual").textContent = "0";
-            document.getElementById("estadoAutomata").textContent = "Esperando";
- 
-            document.getElementById("historial").innerHTML = `
-                <div class="empty-history">
-                    Ingrese una cadena y presione "Procesar" o "Avanzar paso a paso".
-                </div>
-            `;
- 
-            document.getElementById("listaTransiciones").innerHTML = `
-                <div class="empty-history">Aún no se han realizado transiciones.</div>
-            `;
- 
-            mostrarMensajeMotor('El mensaje que devuelve <code>afnd.py</code> aparecerá aquí al procesar una cadena.');
- 
-            const resultado = document.getElementById("resultado");
-            resultado.className = "result-box";
- 
-            actualizarEstados();
-            limpiarGrafo();
-            ocultarAlerta();
- 
-            const inicial = document.getElementById("state-Q0");
-            if (inicial) {
-                inicial.classList.add("active");
-            }
+
+            return;
+
         }
- 
-        function salir() {
-            window.location.href = "/logout";
-        }
- 
-        document.getElementById("cadena").addEventListener("keydown", function (event) {
-            if (event.key === "Enter") {
-                procesarCadena();
-            }
-        });
- 
-        document.addEventListener("DOMContentLoaded", function () {
-            actualizarEstados();
-            limpiarGrafo();
- 
-            const inicial = document.getElementById("state-Q0");
-            if (inicial) {
-                inicial.classList.add("active");
-            }
-        });
+
+    }
 
 
-    </script>
+    if (posicion >= cadena.length) {
+
+        mostrarAlerta(
+            "La cadena ya fue procesada.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    const simbolo =
+        cadena[posicion];
+
+
+    document.getElementById(
+        "simboloActual"
+    ).textContent =
+        simbolo;
+
+
+    const anteriores =
+        [...estadosActivos];
+
+
+    const siguientes =
+        obtenerSiguientesEstados(
+            estadosActivos,
+            simbolo
+        );
+
+
+    historial.push({
+
+        numero: posicion + 1,
+
+        simbolo: simbolo,
+
+        anteriores: anteriores,
+
+        siguientes: siguientes
+
+    });
+
+
+    agregarHistorial(
+        posicion + 1,
+        simbolo,
+        anteriores,
+        siguientes
+    );
+
+
+    agregarTransicion(
+
+        anteriores.join(", ") +
+        " --" +
+        simbolo +
+        "--> " +
+        (
+            siguientes.length > 0
+                ? siguientes.join(", ")
+                : "sin transición"
+        )
+
+    );
+
+
+    estadosActivos =
+        siguientes;
+
+
+    posicion++;
+
+
+    document.getElementById(
+        "pasoActual"
+    ).textContent =
+        posicion;
+
+
+    actualizarEstados();
+
+
+    resaltarTransicion(
+        anteriores,
+        simbolo,
+        siguientes
+    );
+
+
+    actualizarRuta();
+
+
+    if (siguientes.length === 0) {
+
+        mostrarResultado(
+            false,
+            "CADENA RECHAZADA",
+            "No existe una transición válida para continuar desde los estados actuales."
+        );
+
+        return;
+
+    }
+
+
+    if (siguientes.includes("Q8")) {
+
+        mostrarResultado(
+            false,
+            "ACCESO RECHAZADO",
+            "El autómata llegó al estado Q8."
+        );
+
+        return;
+
+    }
+
+
+    if (posicion === cadena.length) {
+
+        if (
+            siguientes.includes("Q6") ||
+            siguientes.includes("Q7")
+        ) {
+
+            mostrarResultado(
+                true,
+                "CADENA ACEPTADA",
+                "La cadena alcanzó un estado de aceptación."
+            );
+
+        }
+
+        else {
+
+            mostrarResultado(
+                false,
+                "CADENA RECHAZADA",
+                "La cadena terminó sin alcanzar Q6 ni Q7."
+            );
+
+        }
+
+    }
+
+    else {
+
+        document.getElementById(
+            "estadoAutomata"
+        ).textContent =
+            descripcionEstado(
+                siguientes[0]
+            );
+
+    }
+
+}
+
+
+/* =========================================================
+   PROCESAR CADENA COMPLETA
+========================================================= */
+
+
+function procesarCadena() {
+
+    ocultarAlerta();
+
+
+    const campo =
+        document.getElementById(
+            "cadena"
+        );
+
+
+    const valor =
+        campo.value
+        .trim()
+        .toLowerCase();
+
+
+    if (!validarCadena(valor)) {
+
+        return;
+
+    }
+
+
+    reiniciar(false);
+
+
+    cadena = valor;
+
+
+    let contador = 0;
+
+
+    function ejecutarPaso() {
+
+        if (
+            contador >= cadena.length
+        ) {
+
+            return;
+
+        }
+
+
+        avanzarPaso();
+
+        contador++;
+
+
+        setTimeout(
+            ejecutarPaso,
+            450
+        );
+
+    }
+
+
+    ejecutarPaso();
+
+}
+
+
+/* =========================================================
+   MOSTRAR RESULTADO
+========================================================= */
+
+
+function mostrarResultado(
+    aceptada,
+    titulo,
+    descripcion
+) {
+
+    const resultado =
+        document.getElementById(
+            "resultado"
+        );
+
+
+    resultado.className =
+        "result-box show " +
+        (
+            aceptada
+                ? "accepted"
+                : "rejected"
+        );
+
+
+    document.getElementById(
+        "resultadoTitulo"
+    ).textContent =
+        titulo;
+
+
+    document.getElementById(
+        "resultadoDescripcion"
+    ).textContent =
+        descripcion;
+
+
+    document.getElementById(
+        "estadoAutomata"
+    ).textContent =
+        aceptada
+            ? "Aceptada"
+            : "Rechazada";
+
+
+    estadosActivos.forEach(
+        function(estado) {
+
+            const elemento =
+                document.getElementById(
+                    "state-" + estado
+                );
+
+
+            if (!elemento) {
+                return;
+            }
+
+
+            if (aceptada) {
+
+                elemento.classList.remove(
+                    "active",
+                    "current"
+                );
+
+                elemento.classList.add(
+                    "accept"
+                );
+
+            }
+
+            else if (
+                estado === "Q8"
+            ) {
+
+                elemento.classList.remove(
+                    "active",
+                    "current"
+                );
+
+                elemento.classList.add(
+                    "reject"
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   REINICIAR
+========================================================= */
+
+
+function reiniciar(
+    limpiarCampo = true
+) {
+
+    if (limpiarCampo) {
+
+        document.getElementById(
+            "cadena"
+        ).value = "";
+
+    }
+
+
+    cadena = "";
+
+    posicion = 0;
+
+    estadosActivos = ["Q0"];
+
+    historial = [];
+
+    tipoDetectado = null;
+
+
+    document.getElementById(
+        "simboloActual"
+    ).textContent = "—";
+
+
+    document.getElementById(
+        "pasoActual"
+    ).textContent = "0";
+
+
+    document.getElementById(
+        "estadoAutomata"
+    ).textContent =
+        "Esperando ticket";
+
+
+    document.getElementById(
+        "historial"
+    ).innerHTML = `
+
+        <div class="empty">
+            Ingrese una cadena para comenzar la simulación.
+        </div>
+
+    `;
+
+
+    document.getElementById(
+        "listaTransiciones"
+    ).innerHTML = `
+
+        <div class="empty">
+            No hay transiciones todavía.
+        </div>
+
+    `;
+
+
+    document.getElementById(
+        "rutas"
+    ).innerHTML = `
+
+        <div class="route">
+            Q0
+        </div>
+
+    `;
+
+
+    document.getElementById(
+        "resultado"
+    ).className =
+        "result-box";
+
+
+    limpiarTransiciones();
+
+
+    const estados = [
+
+        "Q0",
+        "Q1",
+        "Q2",
+        "Q3",
+        "Q4",
+        "Q5",
+        "Q6",
+        "Q7",
+        "Q8",
+        "Q9"
+
+    ];
+
+
+    estados.forEach(function(estado) {
+
+        const elemento =
+            document.getElementById(
+                "state-" + estado
+            );
+
+
+        if (elemento) {
+
+            elemento.classList.remove(
+                "active",
+                "current",
+                "accept",
+                "reject"
+            );
+
+        }
+
+    });
+
+
+    const inicial =
+        document.getElementById(
+            "state-Q0"
+        );
+
+
+    if (inicial) {
+
+        inicial.classList.add(
+            "active"
+        );
+
+    }
+
+
+    actualizarEstados();
+
+    ocultarAlerta();
+
+}
+
+
+/* =========================================================
+   SALIR
+========================================================= */
+
+
+function salir() {
+
+    window.location.href =
+        "/logout";
+
+}
+
+
+/* =========================================================
+   ENTER
+========================================================= */
+
+
+document.getElementById(
+    "cadena"
+).addEventListener(
+    "keydown",
+    function(event) {
+
+        if (event.key === "Enter") {
+
+            procesarCadena();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   INICIAR
+========================================================= */
+
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+
+        reiniciar();
+
+    }
+);
+
+</script>
 
 </body>
+
 </html>
+```
