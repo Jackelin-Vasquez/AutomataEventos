@@ -370,6 +370,7 @@ db = GestorBaseDatosMySQL()
 
 crear_evento = db.crear_evento
 verificar_capacidad_evento = db.verificar_capacidad_evento
+verificar_capacidad_categoria = db.verificar_capacidad_categoria
 obtener_eventos = db.obtener_eventos
 obtener_todos_los_boletos = db.obtener_todos_los_boletos
 validar_y_cambiar_estado = db.validar_y_cambiar_estado
@@ -378,7 +379,6 @@ consultar_y_generar_cadena = db.consultar_y_generar_cadena
 marcar_como_usada = db.marcar_como_usada
 reiniciar_boletos_prueba = db.reiniciar_boletos_prueba
 obtener_siguiente_codigo = db.obtener_siguiente_codigo
-
 
 if __name__ == "__main__":
     print("Base de datos inicializada correctamente.")
