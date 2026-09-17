@@ -5,6 +5,8 @@ DESCRIPCIÓN:
 """
 
 import os
+import smtplib
+from email.message import EmailMessage
 from flask import Flask, render_template, request, send_file, jsonify, redirect, url_for, session
 import base_datos
 import generador_pdf
@@ -16,6 +18,51 @@ USUARIOS = {
     "control": {"password": "123", "rol": "control", "nombre": "Personal de Control"},
     "admin": {"password": "admin", "rol": "admin", "nombre": "Administrador AFND"}
 }
+
+
+def enviar_boleto_por_correo(destinatario_correo, nombre_asistente, codigo_boleto, nombre_evento, ruta_pdf):
+    """Envía el boleto en formato PDF por correo electrónico al asistente."""
+    remitente = os.getenv("MAIL_USER", "tu_correo@gmail.com")
+    password = os.getenv("MAIL_PASSWORD", "tu_contraseña_de_aplicacion")
+
+    if not remitente or not password or remitente == "tu_correo@gmail.com":
+        print("[MAIL WARNING]: Credenciales de correo no configuradas. Omitiendo envío.")
+        return False
+
+    msg = EmailMessage()
+    msg['Subject'] = f"¡Tu boleto para {nombre_evento} está listo! ({codigo_boleto})"
+    msg['From'] = remitente
+    msg['To'] = destinatario_correo
+
+    cuerpo = f"""
+    Hola {nombre_asistente},
+    
+    ¡Gracias por registrarte en EventAccess! 
+    Adjunto a este correo encontrarás el pase oficial (PDF) con tu código QR para el evento: {nombre_evento}.
+    
+    Código de tu boleto: {codigo_boleto}
+    
+    ¡Te esperamos!
+    """
+    msg.set_content(cuerpo)
+
+    try:
+        with open(ruta_pdf, 'rb') as f:
+            file_data = f.read()
+            file_name = os.path.basename(ruta_pdf)
+
+        msg.add_attachment(file_data, maintype='application', subtype='pdf', filename=file_name)
+
+        # Conexión segura con el servidor SMTP de Gmail (Puerto 465)
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+            smtp.login(remitente, password)
+            smtp.send_message(msg)
+
+        print(f"[MAIL]: Boleto enviado exitosamente a {destinatario_correo}")
+        return True
+    except Exception as e:
+        print(f"[MAIL ERROR]: No se pudo enviar el correo: {e}")
+        return False
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -88,6 +135,7 @@ def generar_boleto():
 
     codigo = base_datos.obtener_siguiente_codigo()
     asistente = request.form.get('asistente', 'Invitado')
+    correo_asistente = request.form.get('correo', '')  # Captura opcional del correo para envío
     id_evento_raw = request.form.get('id_evento', '1')
     tipo = request.form.get('tipo', 'General')
     metodo = request.form.get('metodo', 'QR')
@@ -106,17 +154,23 @@ def generar_boleto():
 
     # Obtener el nombre real y exacto del evento desde la BD para el PDF
     conexion = base_datos.db.conectar()
-    cursor = conexion.cursor(dictionary=True)
-    cursor.execute("SELECT nombre_evento FROM eventos WHERE id_evento = %s", (id_evento,))
-    evento_info = cursor.fetchone()
-    cursor.close()
-    conexion.close()
-
-    nombre_evento_real = evento_info['nombre_evento'] if evento_info and evento_info.get('nombre_evento') else "Evento Principal"
+    if conexion:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("SELECT nombre_evento FROM eventos WHERE id_evento = %s", (id_evento,))
+        evento_info = cursor.fetchone()
+        cursor.close()
+        conexion.close()
+        nombre_evento_real = evento_info['nombre_evento'] if evento_info and evento_info.get('nombre_evento') else "Evento Principal"
+    else:
+        nombre_evento_real = "Evento Principal"
 
     # Guardar el PDF temporalmente en /tmp para compatibilidad total con Render
     ruta_pdf = os.path.join('/tmp', f"Boleto_{codigo}.pdf")
     generador_pdf.crear_pdf_boleto(codigo, asistente, nombre_evento_real, tipo, ruta_pdf)
+
+    # Enviar correo electrónico si el usuario ingresó una dirección
+    if correo_asistente:
+        enviar_boleto_por_correo(correo_asistente, asistente, codigo, nombre_evento_real, ruta_pdf)
 
     return send_file(ruta_pdf, as_attachment=True)
 
