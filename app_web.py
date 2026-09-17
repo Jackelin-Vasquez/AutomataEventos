@@ -213,8 +213,8 @@ def generar_boleto():
     ruta_pdf = os.path.join('/tmp', f"Boleto_{codigo}.pdf")
     generador_pdf.crear_pdf_boleto(codigo, asistente, nombre_evento_real, tipo, ruta_pdf)
 
-    # Enviar correo mediante SendGrid si ingresaron correo
-    if correo_asistente:
+    # Enviar correo mediante SendGrid SOLAMENTE si el campo de correo no está vacío
+    if correo_asistente and correo_asistente.strip() != "":
         enviar_boleto_por_correo(correo_asistente, asistente, codigo, nombre_evento_real, ruta_pdf)
 
     return send_file(ruta_pdf, as_attachment=True)
