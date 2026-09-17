@@ -11,6 +11,7 @@ import requests
 from flask import Flask, render_template, request, send_file, jsonify, redirect, url_for, session
 import base_datos
 import generador_pdf
+import zipfile
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "eventaccess_secret_key_2026")
@@ -21,8 +22,8 @@ USUARIOS = {
 }
 
 
-def enviar_boleto_por_correo(destinatario_correo, nombre_asistente, codigo_boleto, nombre_evento, ruta_pdf):
-    """Envía el boleto PDF mediante la API HTTP de SendGrid usando Single Sender Verification."""
+def enviar_boletos_por_correo(destinatario_correo, nombre_asistente, nombre_evento, rutas_pdfs):
+    """Envía todos los boletos generados en un solo correo mediante la API HTTP de SendGrid."""
     api_key = os.getenv("SENDGRID_API_KEY")
     remitente = os.getenv("MAIL_USER")
 
@@ -31,15 +32,28 @@ def enviar_boleto_por_correo(destinatario_correo, nombre_asistente, codigo_bolet
         return False
 
     try:
-        with open(ruta_pdf, "rb") as archivo:
-            archivo_pdf = archivo.read()
-        archivo_base64 = base64.b64encode(archivo_pdf).decode("utf-8")
+        attachments_list = []
+
+        # Procesar cada PDF y agregarlo a la lista de adjuntos de SendGrid
+        for ruta_pdf in rutas_pdfs:
+            if os.path.exists(ruta_pdf):
+                with open(ruta_pdf, "rb") as archivo:
+                    archivo_pdf = archivo.read()
+                archivo_base64 = base64.b64encode(archivo_pdf).decode("utf-8")
+                nombre_archivo = os.path.basename(ruta_pdf)
+
+                attachments_list.append({
+                    "content": archivo_base64,
+                    "filename": nombre_archivo,
+                    "type": "application/pdf",
+                    "disposition": "attachment"
+                })
 
         datos = {
             "personalizations": [
                 {
                     "to": [{"email": destinatario_correo}],
-                    "subject": f"¡Tu boleto para {nombre_evento} está listo! ({codigo_boleto})"
+                    "subject": f"¡Tus entradas para {nombre_evento} están listas!"
                 }
             ],
             "from": {
@@ -53,25 +67,15 @@ def enviar_boleto_por_correo(destinatario_correo, nombre_asistente, codigo_bolet
                         <div style="font-family: Arial, sans-serif; color: #333; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
                             <h2 style="color: #2563eb;">¡Hola {nombre_asistente}!</h2>
                             <p>Gracias por registrarte en <strong>EventAccess</strong>.</p>
-                            <p>Tu pase digital para el evento <strong>{nombre_evento}</strong> se ha generado con éxito.</p>
-                            <p style="background: #f8fafc; padding: 10px; border-radius: 5px;">
-                                <strong>Código de boleto:</strong> {codigo_boleto}
-                            </p>
-                            <p>Encontrarás tu boleto oficial adjunto a este correo en formato PDF.</p>
+                            <p>Tus pases digitales para el evento <strong>{nombre_evento}</strong> se han generado con éxito.</p>
+                            <p>Encontrarás tus <strong>{len(rutas_pdfs)} boletos oficiales</strong> adjuntos a este correo en formato PDF.</p>
                             <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
                             <p style="font-size: 12px; color: #64748b;">Sistema automatizado de control de eventos.</p>
                         </div>
                     """
                 }
             ],
-            "attachments": [
-                {
-                    "content": archivo_base64,
-                    "filename": f"Boleto_{codigo_boleto}.pdf",
-                    "type": "application/pdf",
-                    "disposition": "attachment"
-                }
-            ]
+            "attachments": attachments_list
         }
 
         respuesta = requests.post(
@@ -85,7 +89,8 @@ def enviar_boleto_por_correo(destinatario_correo, nombre_asistente, codigo_bolet
         )
 
         if respuesta.status_code == 202 or respuesta.ok:
-            print(f"[MAIL SUCCESS]: Boleto enviado exitosamente a {destinatario_correo} vía SendGrid")
+            print(
+                f"[MAIL SUCCESS]: Correo masivo con {len(rutas_pdfs)} boletos enviado exitosamente a {destinatario_correo} vía SendGrid")
             return True
         else:
             print(f"[MAIL ERROR]: SendGrid respondió con error {respuesta.status_code}: {respuesta.text}")
@@ -180,7 +185,6 @@ def generar_boleto():
 
     tipo = request.form.get('tipo', 'General')
 
-    # Obtener cantidad solicitada y asegurar que esté entre 1 y 3 por seguridad
     try:
         cantidad = int(request.form.get('cantidad_comprada', 1))
         if cantidad < 1: cantidad = 1
@@ -188,13 +192,12 @@ def generar_boleto():
     except ValueError:
         cantidad = 1
 
-    # 1. Validar capacidad global considerando la cantidad
+    # 1. Validaciones de capacidad
     if not base_datos.verificar_capacidad_evento(id_evento, cantidad):
         return f"Error: No hay suficiente capacidad global en este evento para los {cantidad} boletos solicitados.", 400
 
-    # 2. Validar capacidad específica de la categoría considerando la cantidad
     if not base_datos.verificar_capacidad_categoria(id_evento, tipo, cantidad):
-        return f"Error: No hay suficientes cupos disponibles en la categoría '{tipo}' para los {cantidad} boletos solicitados (Máx. 3 por persona).", 400
+        return f"Error: No hay suficientes cupos disponibles en la categoría '{tipo}' para los {cantidad} boletos solicitados.", 400
 
     asistente = request.form.get('asistente', 'Invitado')
     correo_asistente = request.form.get('correo', '')
@@ -214,12 +217,12 @@ def generar_boleto():
     else:
         nombre_evento_real = "Evento Principal"
 
-    # Generar los boletos en un ciclo según la cantidad elegida
-    ultima_ruta_pdf = ""
+    rutas_pdfs = []
+
+    # Generar los boletos en un ciclo limpio
     for i in range(cantidad):
         codigo = base_datos.obtener_siguiente_codigo()
-        # Personalizar el nombre si compra varios (Ej: Juan Pérez (1), Juan Pérez (2))
-        nombre_titular_ticket = f"{asistente} ({i + 1})" if cantidad > 1 else asistente
+        nombre_titular_ticket = asistente
 
         # Guardar en base de datos
         base_datos.registrar_o_actualizar_boleto(codigo, nombre_titular_ticket, id_evento, tipo, metodo, area)
@@ -227,17 +230,25 @@ def generar_boleto():
         # Generar PDF individual
         ruta_pdf = os.path.join('/tmp', f"Boleto_{codigo}.pdf")
         generador_pdf.crear_pdf_boleto(codigo, nombre_titular_ticket, nombre_evento_real, tipo, ruta_pdf)
-        ultima_ruta_pdf = ruta_pdf
+        rutas_pdfs.append(ruta_pdf)
 
-        # Enviar por correo si ingresó uno
-        if correo_asistente and correo_asistente.strip() != "":
-            enviar_boleto_por_correo(correo_asistente, nombre_titular_ticket, codigo, nombre_evento_real, ruta_pdf)
+    # 2. ENVIAR UN SOLO CORREO MASIVO con todos los boletos adjuntos (si ingresó correo)
+    if correo_asistente and correo_asistente.strip() != "":
+        try:
+            enviar_boletos_por_correo(correo_asistente, asistente, nombre_evento_real, rutas_pdfs)
+        except Exception as e:
+            print(f"Error al enviar el correo con los boletos: {e}")
 
-    # Si compró 1 se descarga directo, si compró varios se descarga el último (o puedes ajustarlo).
-    # Lo ideal para múltiples es descargar el archivo o redirigir. Por ahora descargamos el último generado:
-    return send_file(ultima_ruta_pdf, as_attachment=True)
+    # 3. Descarga web (PDF único si es 1, o archivo ZIP si son varios)
+    if cantidad == 1:
+        return send_file(rutas_pdfs[0], as_attachment=True)
 
+    ruta_zip = os.path.join('/tmp', f"Boletos_{asistente.replace(' ', '_')}.zip")
+    with zipfile.ZipFile(ruta_zip, 'w') as zipf:
+        for archivo_pdf in rutas_pdfs:
+            zipf.write(archivo_pdf, os.path.basename(archivo_pdf))
 
+    return send_file(ruta_zip, as_attachment=True)
 @app.route('/api/eventos')
 def api_eventos():
     eventos = base_datos.obtener_eventos()
