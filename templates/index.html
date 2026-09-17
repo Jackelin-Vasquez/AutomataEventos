@@ -55,7 +55,14 @@
                             class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none">
                     </div>
 
-                    <!-- NUEVA SECCIÓN: Categorías y Límites Dinámicos -->
+                    <!-- Límite Total de Boletos del Evento -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Límite Total de Boletos del Evento</label>
+                        <input type="number" id="input_capacidad_total" placeholder="Ej. 180" min="1" required
+                            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none bg-slate-50 font-semibold">
+                    </div>
+
+                    <!-- Categorías y Límites Dinámicos -->
                     <div>
                         <div class="flex justify-between items-center mb-1">
                             <label class="block text-xs font-semibold text-slate-500">Categorías y Límites por Tipo</label>
@@ -67,7 +74,6 @@
 
                         <!-- Contenedor dinámico de filas -->
                         <div id="contenedor-categorias" class="space-y-2 mb-2">
-                            <!-- Fila por defecto 1: VIP -->
                             <div class="flex gap-2 items-center categoria-row">
                                 <input type="text" placeholder="Ej. VIP" value="VIP" required
                                     class="w-7/12 px-3 py-2 border rounded-lg text-sm outline-none cat-nombre">
@@ -75,7 +81,6 @@
                                     class="w-4/12 px-3 py-2 border rounded-lg text-sm outline-none cat-cantidad">
                                 <div class="w-1/12 text-center text-slate-300"></div>
                             </div>
-                            <!-- Fila por defecto 2: General -->
                             <div class="flex gap-2 items-center categoria-row">
                                 <input type="text" placeholder="Ej. General" value="General" required
                                     class="w-7/12 px-3 py-2 border rounded-lg text-sm outline-none cat-nombre">
@@ -87,7 +92,7 @@
 
                         <!-- Inputs ocultos que enviarán la información empaquetada a Flask -->
                         <input type="hidden" name="tipos_entrada" id="tipos_entrada_oculto">
-                        <input type="hidden" name="capacidad" id="capacidad_total_oculto">
+                        <input type="hidden" name="capacidad" id="capacidad_final_oculto">
                     </div>
 
                     <div>
@@ -155,6 +160,7 @@
                         <input type="email" name="correo" placeholder="correo@ejemplo.com"
                             class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none">
                     </div>
+
                     <button type="submit" class="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-4 rounded-lg text-sm transition shadow flex items-center justify-center gap-2">
                         <i class="fa-solid fa-file-pdf"></i> Generar Boleto PDF
                     </button>
@@ -215,24 +221,33 @@
             contenedor.appendChild(nuevaFila);
         }
 
-        // Interceptar el envío del formulario de creación de eventos para empaquetar datos
+        // Interceptar el envío del formulario para validar que la suma de categorías coincida con el límite total
         document.getElementById('form-crear-evento')?.addEventListener('submit', function(e) {
+            const limiteTotalInput = parseInt(document.getElementById('input_capacidad_total').value) || 0;
             const filas = document.querySelectorAll('.categoria-row');
+
             let partesTipos = [];
-            let sumaCapacidad = 0;
+            let sumaCategorias = 0;
 
             filas.forEach(fila => {
                 const nombre = fila.querySelector('.cat-nombre').value.trim();
                 const cantidad = parseInt(fila.querySelector('.cat-cantidad').value) || 0;
                 if (nombre && cantidad > 0) {
                     partesTipos.push(`${nombre}:${cantidad}`);
-                    sumaCapacidad += cantidad;
+                    sumaCategorias += cantidad;
                 }
             });
 
-            // Asignar los valores calculados a los campos ocultos que procesa Flask
+            // Validar coincidencia exacta
+            if (sumaCategorias !== limiteTotalInput) {
+                e.preventDefault(); // Cancela el envío
+                alert(`Error de validación:\nLa suma de los boletos por categoría (${sumaCategorias}) no coincide con el límite total del evento (${limiteTotalInput}). ¡Deben ser idénticos!`);
+                return false;
+            }
+
+            // Asignar los valores a los inputs ocultos que procesa Flask
             document.getElementById('tipos_entrada_oculto').value = partesTipos.join(',');
-            document.getElementById('capacidad_total_oculto').value = sumaCapacidad;
+            document.getElementById('capacidad_final_oculto').value = limiteTotalInput;
         });
 
         // Obtener el siguiente código secuencial desde la API
@@ -286,7 +301,7 @@
             const selectTipo = document.getElementById('select_tipo_compra');
             const selectArea = document.getElementById('select_area_compra');
 
-            // Limpia formato si viene con los límites (ej. "VIP:30, General:100" -> extrae solo "VIP", "General")
+            // Limpia formato (ej. "VIP:30, General:100" -> extrae solo "VIP", "General")
             const tiposBrutos = evento.tipos_entrada ? evento.tipos_entrada.split(',') : ['VIP', 'General'];
             const tiposLimpios = tiposBrutos.map(t => t.split(':')[0].trim());
 
