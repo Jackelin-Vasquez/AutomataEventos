@@ -160,14 +160,29 @@ class GestorBaseDatosMySQL:
         return total_emitidos < capacidad_maxima
 
     def verificar_capacidad_categoria(self, id_evento, tipo_entrada, limite_por_defecto=50):
-        """Verifica si aún hay cupo disponible para una categoría específica en un evento."""
+        """Verifica si aún hay cupo disponible para una categoría específica leyendo los límites del evento."""
         conexion = self.conectar()
         if not conexion:
             return False
 
         cursor = conexion.cursor(dictionary=True)
 
-        # Contar cuántos boletos de este tipo exacto ya se han emitido para el evento
+        # Obtener la cadena de tipos y límites guardada en el evento (Ej: "VIP:30,General:100")
+        cursor.execute("SELECT tipos_entrada FROM eventos WHERE id_evento = %s", (id_evento,))
+        evento = cursor.fetchone()
+
+        limite_maximo = limite_por_defecto
+        if evento and evento['tipos_entrada']:
+            # Analizar la cadena para extraer el límite específico de esta categoría
+            partes = evento['tipos_entrada'].split(',')
+            for parte in partes:
+                if ':' in parte:
+                    cat, limite = parte.split(':')
+                    if cat.strip().lower() == tipo_entrada.strip().lower():
+                        limite_maximo = int(limite)
+                        break
+
+        # 2. Contar cuántos boletos de este tipo exacto ya se han emitido para el evento
         cursor.execute(
             "SELECT COUNT(*) as total FROM boletos WHERE id_evento = %s AND tipo_entrada = %s",
             (id_evento, tipo_entrada)
@@ -178,15 +193,7 @@ class GestorBaseDatosMySQL:
         cursor.close()
         conexion.close()
 
-        # Puedes definir un límite por categoría (por ejemplo, 50 para VIP, 150 para General)
-        # O hacerlo dinámico según tu preferencia:
-        limites_por_tipo = {
-            "VIP": 30,  # Máximo 30 boletos VIP
-            "General": 100  # Máximo 100 boletos Generales
-        }
-
-        limite_maximo = limites_por_tipo.get(tipo_entrada, limite_por_defecto)
-
+        # 3. Comparar lo emitido contra el límite dinámico configurado
         return total_emitidos < limite_maximo
 
     def obtener_eventos(self):
