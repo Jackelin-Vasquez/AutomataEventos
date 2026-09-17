@@ -5,6 +5,7 @@ DESCRIPCIÓN:
 """
 
 import os
+import resend
 import smtplib
 from email.message import EmailMessage
 from flask import Flask, render_template, request, send_file, jsonify, redirect, url_for, session
@@ -20,47 +21,64 @@ USUARIOS = {
 }
 
 
-def enviar_boleto_por_correo(destinatario_correo, nombre_asistente, codigo_boleto, nombre_evento, ruta_pdf):
-    """Envía el boleto por correo usando el puerto 587 con timeout para evitar bloqueos en Render."""
-    remitente = os.getenv("MAIL_USER")
-    password = os.getenv("MAIL_PASSWORD")
+def enviar_boleto_por_correo(destinatario_correo, nombre_asistente,
+                             codigo_boleto, nombre_evento, ruta_pdf):
+    """Envía el boleto PDF mediante la API de Resend."""
 
-    if not remitente or not password:
+    api_key = os.getenv("RESEND_API_KEY")
+
+    if not api_key:
+        print("[MAIL ERROR]: No se encontró RESEND_API_KEY en las variables de entorno.")
         return False
 
-    msg = EmailMessage()
-    msg['Subject'] = f"¡Tu boleto para {nombre_evento} está listo! ({codigo_boleto})"
-    msg['From'] = remitente
-    msg['To'] = destinatario_correo
-
-    cuerpo = f"""
-    Hola {nombre_asistente},
-
-    ¡Gracias por registrarte en EventAccess! 
-    Adjunto a este correo encontrarás el pase oficial (PDF) para el evento: {nombre_evento}.
-
-    Código de tu boleto: {codigo_boleto}
-    """
-    msg.set_content(cuerpo)
-
     try:
-        with open(ruta_pdf, 'rb') as f:
-            file_data = f.read()
-            file_name = os.path.basename(ruta_pdf)
+        resend.api_key = api_key
 
-        msg.add_attachment(file_data, maintype='application', subtype='pdf', filename=file_name)
+        with open(ruta_pdf, "rb") as f:
+            archivo_pdf = f.read()
 
-        # Usar puerto 587 con STARTTLS y un timeout de 5 segundos para que Render no colapse xd
-        with smtplib.SMTP('smtp.gmail.com', 587, timeout=5) as smtp:
-            smtp.starttls()
-            smtp.login(remitente, password)
-            smtp.send_message(msg)
+        params = {
+            "from": "EventAccess <onboarding@resend.dev>",
+            "to": [destinatario_correo],
+            "subject": f"¡Tu boleto para {nombre_evento} está listo! ({codigo_boleto})",
+            "html": f"""
+                <h2>¡Hola {nombre_asistente}!</h2>
+
+                <p>Gracias por registrarte en <strong>EventAccess</strong>.</p>
+
+                <p>
+                    Adjunto encontrarás tu boleto oficial para el evento:
+                    <strong>{nombre_evento}</strong>.
+                </p>
+
+                <p>
+                    <strong>Código de boleto:</strong> {codigo_boleto}
+                </p>
+
+                <p>
+                    Presenta este boleto al momento de ingresar al evento.
+                </p>
+
+                <p>¡Gracias por utilizar EventAccess!</p>
+            """,
+            "attachments": [
+                {
+                    "filename": f"Boleto_{codigo_boleto}.pdf",
+                    "content": archivo_pdf
+                }
+            ]
+        }
+
+        respuesta = resend.Emails.send(params)
 
         print(f"[MAIL SUCCESS]: Boleto enviado a {destinatario_correo}")
+        print(f"[RESEND]: {respuesta}")
+
         return True
+
     except Exception as e:
-        print(f"[MAIL TIMEOUT/ERROR]: El correo no se pudo enviar por restricciones de red: {e}")
-        return False  # Retorna falso pero deja que la aplicación siga su curso sin dar error 502
+        print(f"[MAIL ERROR]: No se pudo enviar el correo: {e}")
+        return False
 
 
 @app.route('/login', methods=['GET', 'POST'])
