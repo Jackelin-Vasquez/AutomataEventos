@@ -213,7 +213,7 @@
                 </button>
             </div>
 
-            <form action="/editar_boleto" method="POST" class="flex flex-col gap-3">
+            <form action="/actualizar_boleto" method="POST" class="flex flex-col gap-3">
                 <input type="hidden" name="codigo" id="edit_codigo">
 
                 <div>
@@ -238,13 +238,15 @@
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 mb-1">Tipo de Entrada</label>
-                        <input type="text" name="tipo" id="edit_tipo" required
-                            class="w-full px-3 py-2 border rounded-lg text-sm outline-none">
+                        <select name="tipo" id="edit_tipo" required
+                            class="w-full px-3 py-2 border rounded-lg text-sm outline-none bg-slate-50">
+                        </select>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 mb-1">Área Autorizada</label>
-                        <input type="text" name="area" id="edit_area" required
-                            class="w-full px-3 py-2 border rounded-lg text-sm outline-none">
+                        <select name="area" id="edit_area" required
+                            class="w-full px-3 py-2 border rounded-lg text-sm outline-none bg-slate-50">
+                        </select>
                     </div>
                 </div>
 
@@ -308,7 +310,7 @@
             document.getElementById('capacidad_final_oculto').value = limiteTotalInput;
         });
 
-        // 1. Cargar eventos registrados e inicializar selectores
+        // 1. Cargar eventos registrados e inicializar selectores principales
         function cargarEventos() {
             fetch('/api/eventos')
                 .then(res => res.json())
@@ -333,12 +335,12 @@
                 .catch(err => console.error("Error al cargar eventos:", err));
         }
 
-        // 2. Escuchar cambios de selección en el selector de evento
+        // 2. Escuchar cambios de selección en el selector de evento principal
         document.getElementById('select_evento_compra')?.addEventListener('change', (e) => {
             actualizarOpcionesDeEvento(e.target.value);
         });
 
-        // 3. Actualizar tipos de entrada y áreas autorizadas en función del evento seleccionado
+        // 3. Actualizar tipos de entrada y áreas autorizadas en el formulario principal
         function actualizarOpcionesDeEvento(idEvento) {
             const evento = eventosCache.find(e => e.id_evento == idEvento);
             if (!evento) return;
@@ -355,7 +357,30 @@
             selectArea.innerHTML = areas.map(a => `<option value="${a.trim()}">${a.trim()}</option>`).join('');
         }
 
-        // 4. Cargar tabla de boletos registrados desde la API
+        // 4. Actualizar tipos y áreas en el MODAL DE EDICIÓN al cambiar de evento ahí dentro
+        document.getElementById('edit_id_evento')?.addEventListener('change', (e) => {
+            actualizarOpcionesDeEdicion(e.target.value, null, null);
+        });
+
+        function actualizarOpcionesDeEdicion(idEvento, tipoSeleccionado, areaSeleccionada) {
+            const evento = eventosCache.find(e => e.id_evento == idEvento);
+            if (!evento) return;
+
+            const selectEditTipo = document.getElementById('edit_tipo');
+            const selectEditArea = document.getElementById('edit_area');
+
+            const tiposBrutos = evento.tipos_entrada ? evento.tipos_entrada.split(',') : ['VIP', 'General'];
+            const tiposLimpios = tiposBrutos.map(t => t.split(':')[0].trim());
+            const areas = evento.areas_acceso ? evento.areas_acceso.split(',') : ['Zona VIP', 'Zona General'];
+
+            selectEditTipo.innerHTML = tiposLimpios.map(t => `<option value="${t}" ${t === tipoSeleccionado ? 'selected' : ''}>${t}</option>`).join('');
+            selectEditArea.innerHTML = areas.map(a => {
+                const areaTrim = a.trim();
+                return `<option value="${areaTrim}" ${areaTrim === areaSeleccionada ? 'selected' : ''}>${areaTrim}</option>`;
+            }).join('');
+        }
+
+        // 5. Cargar tabla de boletos registrados desde la API
         function cargarBoletos() {
             fetch('/api/boletos')
                 .then(res => res.json())
@@ -404,8 +429,6 @@
             document.getElementById('modal-codigo-titulo').innerText = boleto.codigo;
             document.getElementById('edit_asistente').value = boleto.asistente || '';
             document.getElementById('edit_correo').value = boleto.correo || '';
-            document.getElementById('edit_tipo').value = boleto.tipo || '';
-            document.getElementById('edit_area').value = boleto.area_acceso || '';
 
             const selectEditEvento = document.getElementById('edit_id_evento');
             selectEditEvento.innerHTML = '';
@@ -413,6 +436,9 @@
                 const selected = e.id_evento == boleto.id_evento ? 'selected' : '';
                 selectEditEvento.innerHTML += `<option value="${e.id_evento}" ${selected}>${e.nombre_evento}</option>`;
             });
+
+            // Cargar dinámicamente los selects de tipo y área según el evento actual del boleto
+            actualizarOpcionesDeEdicion(boleto.id_evento, boleto.tipo, boleto.area_acceso);
 
             document.getElementById('modal-editar').classList.remove('hidden');
         }
