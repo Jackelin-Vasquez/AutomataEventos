@@ -21,12 +21,15 @@ USUARIOS = {
 
 
 def enviar_boleto_por_correo(destinatario_correo, nombre_asistente, codigo_boleto, nombre_evento, ruta_pdf):
-    """Envía el boleto en formato PDF por correo electrónico al asistente."""
-    remitente = os.getenv("MAIL_USER", "tu_correo@gmail.com")
-    password = os.getenv("MAIL_PASSWORD", "tu_contraseña_de_aplicacion")
+    """Envía el boleto en formato PDF por correo electrónico al asistente con depuración."""
+    remitente = os.getenv("MAIL_USER")
+    password = os.getenv("MAIL_PASSWORD")
 
-    if not remitente or not password or remitente == "tu_correo@gmail.com":
-        print("[MAIL WARNING]: Credenciales de correo no configuradas. Omitiendo envío.")
+    print(f"[MAIL DEBUG] Intentando enviar correo desde: {remitente}")
+    print(f"[MAIL DEBUG] Destinatario: {destinatario_correo}")
+
+    if not remitente or not password:
+        print("[MAIL ERROR]: Faltan las variables de entorno MAIL_USER o MAIL_PASSWORD.")
         return False
 
     msg = EmailMessage()
@@ -36,12 +39,12 @@ def enviar_boleto_por_correo(destinatario_correo, nombre_asistente, codigo_bolet
 
     cuerpo = f"""
     Hola {nombre_asistente},
-    
+
     ¡Gracias por registrarte en EventAccess! 
     Adjunto a este correo encontrarás el pase oficial (PDF) con tu código QR para el evento: {nombre_evento}.
-    
+
     Código de tu boleto: {codigo_boleto}
-    
+
     ¡Te esperamos!
     """
     msg.set_content(cuerpo)
@@ -53,15 +56,15 @@ def enviar_boleto_por_correo(destinatario_correo, nombre_asistente, codigo_bolet
 
         msg.add_attachment(file_data, maintype='application', subtype='pdf', filename=file_name)
 
-        # Conexión segura con el servidor SMTP de Gmail (Puerto 465)
+        print("[MAIL DEBUG] Conectando al servidor SMTP de Gmail...")
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
             smtp.login(remitente, password)
             smtp.send_message(msg)
 
-        print(f"[MAIL]: Boleto enviado exitosamente a {destinatario_correo}")
+        print(f"[MAIL SUCCESS]: Boleto enviado exitosamente a {destinatario_correo}")
         return True
     except Exception as e:
-        print(f"[MAIL ERROR]: No se pudo enviar el correo: {e}")
+        print(f"MAIL CRITICAL ERROR]: {e}")
         return False
 
 
