@@ -20,77 +20,63 @@ USUARIOS = {
 }
 
 
-def enviar_boleto_por_correo(destinatario_correo, nombre_asistente,
-                             codigo_boleto, nombre_evento, ruta_pdf):
-    """Envía el boleto PDF mediante Sendlib."""
-
-    api_key = os.getenv("SENDLIB_API_KEY")
+def enviar_boleto_por_correo(destinatario_correo, nombre_asistente, codigo_boleto, nombre_evento, ruta_pdf):
+    """Envía el boleto PDF mediante la API HTTP de SendGrid usando Single Sender Verification."""
+    api_key = os.getenv("SENDGRID_API_KEY")
     remitente = os.getenv("MAIL_USER")
 
-    if not api_key:
-        print("[MAIL ERROR]: No se encontró SENDLIB_API_KEY.")
-        return False
-
-    if not remitente:
-        print("[MAIL ERROR]: No se encontró MAIL_USER.")
+    if not api_key or not remitente:
+        print("[MAIL ERROR]: Falta configurar SENDGRID_API_KEY o MAIL_USER en las variables de entorno.")
         return False
 
     try:
-        # Leer el PDF
+        # Leer el PDF y convertirlo a Base64
         with open(ruta_pdf, "rb") as archivo:
             archivo_pdf = archivo.read()
-
-        # Convertir PDF a Base64
         archivo_base64 = base64.b64encode(archivo_pdf).decode("utf-8")
 
+        # Estructura JSON requerida por la API v3 de SendGrid
         datos = {
-            "from": remitente,
-            "to": destinatario_correo,
-            "subject": f"¡Tu boleto para {nombre_evento} está listo! ({codigo_boleto})",
-
-            "html": f"""
-                <html>
-                <body>
-                    <h2>¡Hola {nombre_asistente}!</h2>
-
-                    <p>
-                        Gracias por registrarte en
-                        <strong>EventAccess</strong>.
-                    </p>
-
-                    <p>
-                        Tu boleto para el evento
-                        <strong>{nombre_evento}</strong>
-                        está listo.
-                    </p>
-
-                    <p>
-                        <strong>Código de boleto:</strong>
-                        {codigo_boleto}
-                    </p>
-
-                    <p>
-                        Encontrarás tu boleto oficial
-                        adjunto en formato PDF.
-                    </p>
-
-                    <p>
-                        ¡Gracias por utilizar EventAccess!
-                    </p>
-                </body>
-                </html>
-            """,
-
+            "personalizations": [
+                {
+                    "to": [{"email": destinatario_correo}],
+                    "subject": f"¡Tu boleto para {nombre_evento} está listo! ({codigo_boleto})"
+                }
+            ],
+            "from": {
+                "email": remitente,
+                "name": "EventAccess System"
+            },
+            "content": [
+                {
+                    "type": "text/html",
+                    "value": f"""
+                        <div style="font-family: Arial, sans-serif; color: #333; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            <h2 style="color: #2563eb;">¡Hola {nombre_asistente}!</h2>
+                            <p>Gracias por registrarte en <strong>EventAccess</strong>.</p>
+                            <p>Tu pase digital para el evento <strong>{nombre_evento}</strong> se ha generado con éxito.</p>
+                            <p style="background: #f8fafc; padding: 10px; border-radius: 5px;">
+                                <strong>Código de boleto:</strong> {codigo_boleto}
+                            </p>
+                            <p>Encontrarás tu boleto oficial adjunto a este correo en formato PDF.</p>
+                            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+                            <p style="font-size: 12px; color: #64748b;">Sistema automatizado de control de eventos.</p>
+                        </div>
+                    """
+                }
+            ],
             "attachments": [
                 {
+                    "content": archivo_base64,
                     "filename": f"Boleto_{codigo_boleto}.pdf",
-                    "content": archivo_base64
+                    "type": "application/pdf",
+                    "disposition": "attachment"
                 }
             ]
         }
 
         respuesta = requests.post(
-            "https://sendlib.samueltuoyo.com/api/send",
+            "https://api.sendgrid.com/v3/mail/send",
             headers={
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json"
@@ -99,17 +85,16 @@ def enviar_boleto_por_correo(destinatario_correo, nombre_asistente,
             timeout=15
         )
 
-        if respuesta.ok:
-            print(f"[MAIL SUCCESS]: Boleto enviado a {destinatario_correo}")
-            print(f"[SENDLIB]: {respuesta.text}")
+        # SendGrid responde con códigos 202 (Accepted) cuando el correo se encola correctamente
+        if respuesta.status_code == 202 or respuesta.ok:
+            print(f"[MAIL SUCCESS]: Boleto enviado exitosamente a {destinatario_correo} vía SendGrid")
             return True
-
-        print(f"[MAIL ERROR]: Sendlib respondió {respuesta.status_code}")
-        print(f"[SENDLIB]: {respuesta.text}")
-        return False
+        else:
+            print(f"[MAIL ERROR]: SendGrid respondió con error {respuesta.status_code}: {respuesta.text}")
+            return False
 
     except Exception as e:
-        print(f"[MAIL ERROR]: No se pudo enviar el correo: {e}")
+        print(f"[MAIL ERROR]: No se pudo conectar con SendGrid: {e}")
         return False
 
 @app.route('/login', methods=['GET', 'POST'])
