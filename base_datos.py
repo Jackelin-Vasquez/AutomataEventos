@@ -133,8 +133,8 @@ class GestorBaseDatosMySQL:
             print(f"Error al crear evento: {e}")
             return False
 
-    def verificar_capacidad_evento(self, id_evento):
-        """Devuelve True si aún hay espacio disponible, o False si se alcanzó el límite."""
+    def verificar_capacidad_evento(self, id_evento, cantidad_deseada=1):
+        """Devuelve True si hay suficiente espacio global para la cantidad deseada."""
         conexion = self.conectar()
         if not conexion:
             return False
@@ -157,23 +157,22 @@ class GestorBaseDatosMySQL:
         cursor.close()
         conexion.close()
 
-        return total_emitidos < capacidad_maxima
+        return (total_emitidos + cantidad_deseada) <= capacidad_maxima
 
-    def verificar_capacidad_categoria(self, id_evento, tipo_entrada, limite_por_defecto=50):
-        """Verifica si aún hay cupo disponible para una categoría específica leyendo los límites del evento."""
+    def verificar_capacidad_categoria(self, id_evento, tipo_entrada, cantidad_deseada=1):
+        """Verifica si aún hay suficientes cupos disponibles para la cantidad solicitada en una categoría."""
         conexion = self.conectar()
         if not conexion:
             return False
 
         cursor = conexion.cursor(dictionary=True)
 
-        # Obtener la cadena de tipos y límites guardada en el evento (Ej: "VIP:30,General:100")
+        # 1. Obtener límite máximo de la categoría desde la cadena del evento
         cursor.execute("SELECT tipos_entrada FROM eventos WHERE id_evento = %s", (id_evento,))
         evento = cursor.fetchone()
 
-        limite_maximo = limite_por_defecto
+        limite_maximo = 50  # Valor por defecto por seguridad
         if evento and evento['tipos_entrada']:
-            # Analizar la cadena para extraer el límite específico de esta categoría
             partes = evento['tipos_entrada'].split(',')
             for parte in partes:
                 if ':' in parte:
@@ -182,7 +181,7 @@ class GestorBaseDatosMySQL:
                         limite_maximo = int(limite)
                         break
 
-        # 2. Contar cuántos boletos de este tipo exacto ya se han emitido para el evento
+        # 2. Contar cuántos boletos ya se emitieron de este tipo
         cursor.execute(
             "SELECT COUNT(*) as total FROM boletos WHERE id_evento = %s AND tipo_entrada = %s",
             (id_evento, tipo_entrada)
@@ -193,8 +192,8 @@ class GestorBaseDatosMySQL:
         cursor.close()
         conexion.close()
 
-        # 3. Comparar lo emitido contra el límite dinámico configurado
-        return total_emitidos < limite_maximo
+        # 3. Validar que la suma actual + la cantidad deseada no supere el límite
+        return (total_emitidos + cantidad_deseada) <= limite_maximo
 
     def obtener_eventos(self):
         """Retorna la lista de eventos disponibles con su capacidad."""

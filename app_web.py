@@ -180,24 +180,28 @@ def generar_boleto():
 
     tipo = request.form.get('tipo', 'General')
 
-    # 1. Validar capacidad global del evento
-    if not base_datos.verificar_capacidad_evento(id_evento):
-        return "Error: Este evento ha alcanzado su capacidad máxima global de boletos.", 400
+    # Obtener cantidad solicitada y asegurar que esté entre 1 y 3 por seguridad
+    try:
+        cantidad = int(request.form.get('cantidad_comprada', 1))
+        if cantidad < 1: cantidad = 1
+        if cantidad > 3: cantidad = 3
+    except ValueError:
+        cantidad = 1
 
-    # 2. Validar capacidad específica de la categoría (VIP / General)
-    if not base_datos.verificar_capacidad_categoria(id_evento, tipo):
-        return f"Error: Se han agotado los boletos para la categoría '{tipo}' en este evento.", 400
+    # 1. Validar capacidad global considerando la cantidad
+    if not base_datos.verificar_capacidad_evento(id_evento, cantidad):
+        return f"Error: No hay suficiente capacidad global en este evento para los {cantidad} boletos solicitados.", 400
 
-    codigo = base_datos.obtener_siguiente_codigo()
+    # 2. Validar capacidad específica de la categoría considerando la cantidad
+    if not base_datos.verificar_capacidad_categoria(id_evento, tipo, cantidad):
+        return f"Error: No hay suficientes cupos disponibles en la categoría '{tipo}' para los {cantidad} boletos solicitados (Máx. 3 por persona).", 400
+
     asistente = request.form.get('asistente', 'Invitado')
     correo_asistente = request.form.get('correo', '')
     metodo = request.form.get('metodo', 'QR')
     area = request.form.get('area', 'Zona General')
 
-    # Guardar en base de datos
-    base_datos.registrar_o_actualizar_boleto(codigo, asistente, id_evento, tipo, metodo, area)
-
-    # Obtener nombre del evento
+    # Obtener nombre real del evento
     conexion = base_datos.db.conectar()
     if conexion:
         cursor = conexion.cursor(dictionary=True)
@@ -205,19 +209,33 @@ def generar_boleto():
         evento_info = cursor.fetchone()
         cursor.close()
         conexion.close()
-        nombre_evento_real = evento_info['nombre_evento'] if evento_info and evento_info.get('nombre_evento') else "Evento Principal"
+        nombre_evento_real = evento_info['nombre_evento'] if evento_info and evento_info.get(
+            'nombre_evento') else "Evento Principal"
     else:
         nombre_evento_real = "Evento Principal"
 
-    # Generar PDF en /tmp
-    ruta_pdf = os.path.join('/tmp', f"Boleto_{codigo}.pdf")
-    generador_pdf.crear_pdf_boleto(codigo, asistente, nombre_evento_real, tipo, ruta_pdf)
+    # Generar los boletos en un ciclo según la cantidad elegida
+    ultima_ruta_pdf = ""
+    for i in range(cantidad):
+        codigo = base_datos.obtener_siguiente_codigo()
+        # Personalizar el nombre si compra varios (Ej: Juan Pérez (1), Juan Pérez (2))
+        nombre_titular_ticket = f"{asistente} ({i + 1})" if cantidad > 1 else asistente
 
-    # Enviar correo mediante SendGrid SOLAMENTE si el campo de correo no está vacío
-    if correo_asistente and correo_asistente.strip() != "":
-        enviar_boleto_por_correo(correo_asistente, asistente, codigo, nombre_evento_real, ruta_pdf)
+        # Guardar en base de datos
+        base_datos.registrar_o_actualizar_boleto(codigo, nombre_titular_ticket, id_evento, tipo, metodo, area)
 
-    return send_file(ruta_pdf, as_attachment=True)
+        # Generar PDF individual
+        ruta_pdf = os.path.join('/tmp', f"Boleto_{codigo}.pdf")
+        generador_pdf.crear_pdf_boleto(codigo, nombre_titular_ticket, nombre_evento_real, tipo, ruta_pdf)
+        ultima_ruta_pdf = ruta_pdf
+
+        # Enviar por correo si ingresó uno
+        if correo_asistente and correo_asistente.strip() != "":
+            enviar_boleto_por_correo(correo_asistente, nombre_titular_ticket, codigo, nombre_evento_real, ruta_pdf)
+
+    # Si compró 1 se descarga directo, si compró varios se descarga el último (o puedes ajustarlo).
+    # Lo ideal para múltiples es descargar el archivo o redirigir. Por ahora descargamos el último generado:
+    return send_file(ultima_ruta_pdf, as_attachment=True)
 
 
 @app.route('/api/eventos')
