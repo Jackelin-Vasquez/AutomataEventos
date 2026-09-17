@@ -1,7 +1,8 @@
 """
 MÓDULO: Servidor Web Principal (API & Routing)
 DESCRIPCIÓN:
-    Administra rutas web, login, API REST de boletos y eventos.
+    Administra rutas web, login, API REST de boletos y eventos,
+    integrando envío de correos vía SendGrid y control de capacidad máxima.
 """
 
 import os
@@ -30,12 +31,10 @@ def enviar_boleto_por_correo(destinatario_correo, nombre_asistente, codigo_bolet
         return False
 
     try:
-        # Leer el PDF y convertirlo a Base64
         with open(ruta_pdf, "rb") as archivo:
             archivo_pdf = archivo.read()
         archivo_base64 = base64.b64encode(archivo_pdf).decode("utf-8")
 
-        # Estructura JSON requerida por la API v3 de SendGrid
         datos = {
             "personalizations": [
                 {
@@ -85,7 +84,6 @@ def enviar_boleto_por_correo(destinatario_correo, nombre_asistente, codigo_bolet
             timeout=15
         )
 
-        # SendGrid responde con códigos 202 (Accepted) cuando el correo se encola correctamente
         if respuesta.status_code == 202 or respuesta.ok:
             print(f"[MAIL SUCCESS]: Boleto enviado exitosamente a {destinatario_correo} vía SendGrid")
             return True
@@ -96,6 +94,7 @@ def enviar_boleto_por_correo(destinatario_correo, nombre_asistente, codigo_bolet
     except Exception as e:
         print(f"[MAIL ERROR]: No se pudo conectar con SendGrid: {e}")
         return False
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -155,8 +154,14 @@ def crear_evento():
         tipos_entrada = request.form.get('tipos_entrada', 'VIP,General')
         areas_acceso = request.form.get('areas_acceso', 'Zona VIP,Zona General')
 
+        try:
+            capacidad = int(request.form.get('capacidad', 100))
+        except ValueError:
+            capacidad = 100
+
         if nombre_evento:
-            base_datos.crear_evento(nombre_evento, tipos_entrada, areas_acceso)
+            base_datos.crear_evento(nombre_evento, tipos_entrada, areas_acceso, capacidad)
+
     return redirect(url_for('index'))
 
 
@@ -165,15 +170,7 @@ def generar_boleto():
     if 'usuario' not in session:
         return redirect(url_for('login'))
 
-    codigo = base_datos.obtener_siguiente_codigo()
-    asistente = request.form.get('asistente', 'Invitado')
-    correo_asistente = request.form.get('correo', '')  # Captura opcional del correo para envío
     id_evento_raw = request.form.get('id_evento', '1')
-    tipo = request.form.get('tipo', 'General')
-    metodo = request.form.get('metodo', 'QR')
-    area = request.form.get('area', 'Zona General')
-
-    # Limpiar y extraer de forma segura el ID numérico del evento
     try:
         id_evento = int(''.join(filter(str.isdigit, str(id_evento_raw))))
         if id_evento == 0:
@@ -181,10 +178,26 @@ def generar_boleto():
     except ValueError:
         id_evento = 1
 
-    # Guardar en base de datos incluyendo el asistente y el ID limpio
+    tipo = request.form.get('tipo', 'General')
+
+    # 1. Validar capacidad global del evento
+    if not base_datos.verificar_capacidad_evento(id_evento):
+        return "Error: Este evento ha alcanzado su capacidad máxima global de boletos.", 400
+
+    # 2. Validar capacidad específica de la categoría (VIP / General)
+    if not base_datos.verificar_capacidad_categoria(id_evento, tipo):
+        return f"Error: Se han agotado los boletos para la categoría '{tipo}' en este evento.", 400
+
+    codigo = base_datos.obtener_siguiente_codigo()
+    asistente = request.form.get('asistente', 'Invitado')
+    correo_asistente = request.form.get('correo', '')
+    metodo = request.form.get('metodo', 'QR')
+    area = request.form.get('area', 'Zona General')
+
+    # Guardar en base de datos
     base_datos.registrar_o_actualizar_boleto(codigo, asistente, id_evento, tipo, metodo, area)
 
-    # Obtener el nombre real y exacto del evento desde la BD para el PDF
+    # Obtener nombre del evento
     conexion = base_datos.db.conectar()
     if conexion:
         cursor = conexion.cursor(dictionary=True)
@@ -196,11 +209,11 @@ def generar_boleto():
     else:
         nombre_evento_real = "Evento Principal"
 
-    # Guardar el PDF temporalmente en /tmp para compatibilidad total con Render
+    # Generar PDF en /tmp
     ruta_pdf = os.path.join('/tmp', f"Boleto_{codigo}.pdf")
     generador_pdf.crear_pdf_boleto(codigo, asistente, nombre_evento_real, tipo, ruta_pdf)
 
-    # Enviar correo electrónico si el usuario ingresó una dirección
+    # Enviar correo mediante SendGrid si ingresaron correo
     if correo_asistente:
         enviar_boleto_por_correo(correo_asistente, asistente, codigo, nombre_evento_real, ruta_pdf)
 

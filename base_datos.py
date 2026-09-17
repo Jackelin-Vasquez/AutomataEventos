@@ -48,20 +48,21 @@ class GestorBaseDatosMySQL:
                         id_evento INT AUTO_INCREMENT PRIMARY KEY,
                         nombre_evento VARCHAR(100) NOT NULL,
                         tipos_entrada VARCHAR(255) DEFAULT 'VIP,General',
-                        areas_acceso VARCHAR(255) DEFAULT 'Zona VIP,Zona General'
+                        areas_acceso VARCHAR(255) DEFAULT 'Zona VIP,Zona General',
+                        capacidad INT DEFAULT 100
                     )
                 """)
 
-                # Migración: Agregar columnas si la tabla 'eventos' ya existía sin ellas
-                try:
-                    cursor.execute("ALTER TABLE eventos ADD COLUMN tipos_entrada VARCHAR(255) DEFAULT 'VIP,General'")
-                except Error:
-                    pass
-
-                try:
-                    cursor.execute("ALTER TABLE eventos ADD COLUMN areas_acceso VARCHAR(255) DEFAULT 'Zona VIP,Zona General'")
-                except Error:
-                    pass
+                # Migraciones seguras para tablas preexistentes
+                for col_query in [
+                    "ALTER TABLE eventos ADD COLUMN tipos_entrada VARCHAR(255) DEFAULT 'VIP,General'",
+                    "ALTER TABLE eventos ADD COLUMN areas_acceso VARCHAR(255) DEFAULT 'Zona VIP,Zona General'",
+                    "ALTER TABLE eventos ADD COLUMN capacidad INT DEFAULT 100"
+                ]:
+                    try:
+                        cursor.execute(col_query)
+                    except Error:
+                        pass
 
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS boletos (
@@ -77,7 +78,6 @@ class GestorBaseDatosMySQL:
                 """)
                 conexion.commit()
 
-                # Migración de seguridad por si la tabla boletos ya existía sin la columna asistente
                 try:
                     cursor.execute("ALTER TABLE boletos ADD COLUMN asistente VARCHAR(100) DEFAULT 'Invitado General'")
                     conexion.commit()
@@ -87,8 +87,8 @@ class GestorBaseDatosMySQL:
                 cursor.execute("SELECT COUNT(*) FROM eventos")
                 if cursor.fetchone()[0] == 0:
                     cursor.execute("""
-                        INSERT INTO eventos (id_evento, nombre_evento, tipos_entrada, areas_acceso) 
-                        VALUES (1, 'Concierto Principal 2026', 'VIP,General', 'Zona VIP,Zona General')
+                        INSERT INTO eventos (id_evento, nombre_evento, tipos_entrada, areas_acceso, capacidad) 
+                        VALUES (1, 'Concierto Principal 2026', 'VIP,General', 'Zona VIP,Zona General', 100)
                     """)
                     cursor.execute("""
                         INSERT INTO boletos (codigo, asistente, tipo_entrada, metodo_validacion, id_evento, area_acceso, estado) VALUES
@@ -111,8 +111,8 @@ class GestorBaseDatosMySQL:
             print(f"Error de conexión con MySQL: {e}")
             return None
 
-    def crear_evento(self, nombre_evento, tipos_entrada="VIP,General", areas_acceso="Zona VIP,Zona General"):
-        """Permite al Administrador registrar un nuevo evento con sus opciones."""
+    def crear_evento(self, nombre_evento, tipos_entrada="VIP,General", areas_acceso="Zona VIP,Zona General", capacidad=100):
+        """Permite al Administrador registrar un nuevo evento con su capacidad máxima."""
         conexion = self.conectar()
         if not conexion:
             return False
@@ -120,34 +120,89 @@ class GestorBaseDatosMySQL:
         try:
             cursor = conexion.cursor()
             query = """
-                INSERT INTO eventos (nombre_evento, tipos_entrada, areas_acceso)
-                VALUES (%s, %s, %s)
+                INSERT INTO eventos (nombre_evento, tipos_entrada, areas_acceso, capacidad)
+                VALUES (%s, %s, %s, %s)
             """
-            cursor.execute(query, (nombre_evento, tipos_entrada, areas_acceso))
+            cursor.execute(query, (nombre_evento, tipos_entrada, areas_acceso, int(capacidad)))
             conexion.commit()
             cursor.close()
             conexion.close()
-            print(f"[MySQL]: Nuevo evento '{nombre_evento}' registrado.")
+            print(f"[MySQL]: Nuevo evento '{nombre_evento}' registrado con capacidad {capacidad}.")
             return True
         except Error as e:
             print(f"Error al crear evento: {e}")
             return False
 
+    def verificar_capacidad_evento(self, id_evento):
+        """Devuelve True si aún hay espacio disponible, o False si se alcanzó el límite."""
+        conexion = self.conectar()
+        if not conexion:
+            return False
+
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("SELECT capacidad FROM eventos WHERE id_evento = %s", (id_evento,))
+        evento = cursor.fetchone()
+
+        if not evento:
+            cursor.close()
+            conexion.close()
+            return False
+
+        capacidad_maxima = evento['capacidad']
+
+        cursor.execute("SELECT COUNT(*) as total FROM boletos WHERE id_evento = %s", (id_evento,))
+        resultado = cursor.fetchone()
+        total_emitidos = resultado['total'] if resultado else 0
+
+        cursor.close()
+        conexion.close()
+
+        return total_emitidos < capacidad_maxima
+
+    def verificar_capacidad_categoria(self, id_evento, tipo_entrada, limite_por_defecto=50):
+        """Verifica si aún hay cupo disponible para una categoría específica en un evento."""
+        conexion = self.conectar()
+        if not conexion:
+            return False
+
+        cursor = conexion.cursor(dictionary=True)
+
+        # Contar cuántos boletos de este tipo exacto ya se han emitido para el evento
+        cursor.execute(
+            "SELECT COUNT(*) as total FROM boletos WHERE id_evento = %s AND tipo_entrada = %s",
+            (id_evento, tipo_entrada)
+        )
+        resultado = cursor.fetchone()
+        total_emitidos = resultado['total'] if resultado else 0
+
+        cursor.close()
+        conexion.close()
+
+        # Puedes definir un límite por categoría (por ejemplo, 50 para VIP, 150 para General)
+        # O hacerlo dinámico según tu preferencia:
+        limites_por_tipo = {
+            "VIP": 30,  # Máximo 30 boletos VIP
+            "General": 100  # Máximo 100 boletos Generales
+        }
+
+        limite_maximo = limites_por_tipo.get(tipo_entrada, limite_por_defecto)
+
+        return total_emitidos < limite_maximo
+
     def obtener_eventos(self):
-        """Retorna la lista de eventos disponibles con sus tipos y áreas."""
+        """Retorna la lista de eventos disponibles con su capacidad."""
         conexion = self.conectar()
         if not conexion:
             return []
 
         cursor = conexion.cursor(dictionary=True)
-        cursor.execute("SELECT id_evento, nombre_evento, tipos_entrada, areas_acceso FROM eventos")
+        cursor.execute("SELECT id_evento, nombre_evento, tipos_entrada, areas_acceso, capacidad FROM eventos")
         eventos = cursor.fetchall()
         cursor.close()
         conexion.close()
         return eventos
 
     def obtener_boletos_activos(self):
-        """Retorna la lista de códigos de boletos registrados."""
         conexion = self.conectar()
         if not conexion:
             return []
@@ -183,7 +238,6 @@ class GestorBaseDatosMySQL:
             return "EVT126"
 
     def consultar_y_generar_cadena(self, codigo_entrada):
-        """Genera la cadena para el AFND en base a la información del boleto."""
         conexion = self.conectar()
         if not conexion:
             return "qqe", "ERROR: Sin conexión a MySQL"
@@ -241,7 +295,6 @@ class GestorBaseDatosMySQL:
             conexion.commit()
             cursor.close()
             conexion.close()
-            print(f"[MySQL]: Entrada '{codigo_entrada}' actualizada a 'usada'.")
             return True
         except Error as e:
             print(f"Error al actualizar estado en MySQL: {e}")
@@ -306,12 +359,11 @@ class GestorBaseDatosMySQL:
         conexion.close()
 
 
-
-
 # --- INSTANCIA GLOBAL Y EXPOSICIÓN DE FUNCIONES ---
 db = GestorBaseDatosMySQL()
 
 crear_evento = db.crear_evento
+verificar_capacidad_evento = db.verificar_capacidad_evento
 obtener_eventos = db.obtener_eventos
 obtener_todos_los_boletos = db.obtener_todos_los_boletos
 validar_y_cambiar_estado = db.validar_y_cambiar_estado
