@@ -6,7 +6,7 @@ DESCRIPCIÓN:
 
 import os
 import base64
-import resend
+import requests
 from flask import Flask, render_template, request, send_file, jsonify, redirect, url_for, session
 import base_datos
 import generador_pdf
@@ -22,27 +22,30 @@ USUARIOS = {
 
 def enviar_boleto_por_correo(destinatario_correo, nombre_asistente,
                              codigo_boleto, nombre_evento, ruta_pdf):
-    """Envía el boleto PDF mediante la API de Resend."""
+    """Envía el boleto PDF mediante Sendlib."""
 
-    api_key = os.getenv("RESEND_API_KEY")
+    api_key = os.getenv("SENDLIB_API_KEY")
+    remitente = os.getenv("MAIL_USER")
 
     if not api_key:
-        print("[MAIL ERROR]: No se encontró RESEND_API_KEY.")
+        print("[MAIL ERROR]: No se encontró SENDLIB_API_KEY.")
+        return False
+
+    if not remitente:
+        print("[MAIL ERROR]: No se encontró MAIL_USER.")
         return False
 
     try:
-        resend.api_key = api_key
-
         # Leer el PDF
         with open(ruta_pdf, "rb") as archivo:
             archivo_pdf = archivo.read()
 
-        # Convertir el PDF a Base64
+        # Convertir PDF a Base64
         archivo_base64 = base64.b64encode(archivo_pdf).decode("utf-8")
 
-        parametros = {
-            "from": "EventAccess <onboarding@resend.dev>",
-            "to": [destinatario_correo],
+        datos = {
+            "from": remitente,
+            "to": destinatario_correo,
             "subject": f"¡Tu boleto para {nombre_evento} está listo! ({codigo_boleto})",
 
             "html": f"""
@@ -86,12 +89,24 @@ def enviar_boleto_por_correo(destinatario_correo, nombre_asistente,
             ]
         }
 
-        respuesta = resend.Emails.send(parametros)
+        respuesta = requests.post(
+            "https://sendlib.samueltuoyo.com/api/send",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            },
+            json=datos,
+            timeout=15
+        )
 
-        print(f"[MAIL SUCCESS]: Boleto enviado a {destinatario_correo}")
-        print(f"[RESEND]: {respuesta}")
+        if respuesta.ok:
+            print(f"[MAIL SUCCESS]: Boleto enviado a {destinatario_correo}")
+            print(f"[SENDLIB]: {respuesta.text}")
+            return True
 
-        return True
+        print(f"[MAIL ERROR]: Sendlib respondió {respuesta.status_code}")
+        print(f"[SENDLIB]: {respuesta.text}")
+        return False
 
     except Exception as e:
         print(f"[MAIL ERROR]: No se pudo enviar el correo: {e}")
