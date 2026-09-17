@@ -5,9 +5,8 @@ DESCRIPCIÓN:
 """
 
 import os
+import base64
 import resend
-import smtplib
-from email.message import EmailMessage
 from flask import Flask, render_template, request, send_file, jsonify, redirect, url_for, session
 import base_datos
 import generador_pdf
@@ -28,48 +27,66 @@ def enviar_boleto_por_correo(destinatario_correo, nombre_asistente,
     api_key = os.getenv("RESEND_API_KEY")
 
     if not api_key:
-        print("[MAIL ERROR]: No se encontró RESEND_API_KEY en las variables de entorno.")
+        print("[MAIL ERROR]: No se encontró RESEND_API_KEY.")
         return False
 
     try:
         resend.api_key = api_key
 
-        with open(ruta_pdf, "rb") as f:
-            archivo_pdf = f.read()
+        # Leer el PDF
+        with open(ruta_pdf, "rb") as archivo:
+            archivo_pdf = archivo.read()
 
-        params = {
+        # Convertir el PDF a Base64
+        archivo_base64 = base64.b64encode(archivo_pdf).decode("utf-8")
+
+        parametros = {
             "from": "EventAccess <onboarding@resend.dev>",
             "to": [destinatario_correo],
             "subject": f"¡Tu boleto para {nombre_evento} está listo! ({codigo_boleto})",
+
             "html": f"""
-                <h2>¡Hola {nombre_asistente}!</h2>
+                <html>
+                <body>
+                    <h2>¡Hola {nombre_asistente}!</h2>
 
-                <p>Gracias por registrarte en <strong>EventAccess</strong>.</p>
+                    <p>
+                        Gracias por registrarte en
+                        <strong>EventAccess</strong>.
+                    </p>
 
-                <p>
-                    Adjunto encontrarás tu boleto oficial para el evento:
-                    <strong>{nombre_evento}</strong>.
-                </p>
+                    <p>
+                        Tu boleto para el evento
+                        <strong>{nombre_evento}</strong>
+                        está listo.
+                    </p>
 
-                <p>
-                    <strong>Código de boleto:</strong> {codigo_boleto}
-                </p>
+                    <p>
+                        <strong>Código de boleto:</strong>
+                        {codigo_boleto}
+                    </p>
 
-                <p>
-                    Presenta este boleto al momento de ingresar al evento.
-                </p>
+                    <p>
+                        Encontrarás tu boleto oficial
+                        adjunto en formato PDF.
+                    </p>
 
-                <p>¡Gracias por utilizar EventAccess!</p>
+                    <p>
+                        ¡Gracias por utilizar EventAccess!
+                    </p>
+                </body>
+                </html>
             """,
+
             "attachments": [
                 {
                     "filename": f"Boleto_{codigo_boleto}.pdf",
-                    "content": archivo_pdf
+                    "content": archivo_base64
                 }
             ]
         }
 
-        respuesta = resend.Emails.send(params)
+        respuesta = resend.Emails.send(parametros)
 
         print(f"[MAIL SUCCESS]: Boleto enviado a {destinatario_correo}")
         print(f"[RESEND]: {respuesta}")
@@ -79,7 +96,6 @@ def enviar_boleto_por_correo(destinatario_correo, nombre_asistente,
     except Exception as e:
         print(f"[MAIL ERROR]: No se pudo enviar el correo: {e}")
         return False
-
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
