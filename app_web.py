@@ -21,15 +21,11 @@ USUARIOS = {
 
 
 def enviar_boleto_por_correo(destinatario_correo, nombre_asistente, codigo_boleto, nombre_evento, ruta_pdf):
-    """Envía el boleto en formato PDF por correo electrónico al asistente con depuración."""
+    """Envía el boleto por correo usando el puerto 587 con timeout para evitar bloqueos en Render."""
     remitente = os.getenv("MAIL_USER")
     password = os.getenv("MAIL_PASSWORD")
 
-    print(f"[MAIL DEBUG] Intentando enviar correo desde: {remitente}")
-    print(f"[MAIL DEBUG] Destinatario: {destinatario_correo}")
-
     if not remitente or not password:
-        print("[MAIL ERROR]: Faltan las variables de entorno MAIL_USER o MAIL_PASSWORD.")
         return False
 
     msg = EmailMessage()
@@ -41,11 +37,9 @@ def enviar_boleto_por_correo(destinatario_correo, nombre_asistente, codigo_bolet
     Hola {nombre_asistente},
 
     ¡Gracias por registrarte en EventAccess! 
-    Adjunto a este correo encontrarás el pase oficial (PDF) con tu código QR para el evento: {nombre_evento}.
+    Adjunto a este correo encontrarás el pase oficial (PDF) para el evento: {nombre_evento}.
 
     Código de tu boleto: {codigo_boleto}
-
-    ¡Te esperamos!
     """
     msg.set_content(cuerpo)
 
@@ -56,16 +50,17 @@ def enviar_boleto_por_correo(destinatario_correo, nombre_asistente, codigo_bolet
 
         msg.add_attachment(file_data, maintype='application', subtype='pdf', filename=file_name)
 
-        print("[MAIL DEBUG] Conectando al servidor SMTP de Gmail...")
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+        # Usar puerto 587 con STARTTLS y un timeout de 5 segundos para que Render no colapse xd
+        with smtplib.SMTP('smtp.gmail.com', 587, timeout=5) as smtp:
+            smtp.starttls()
             smtp.login(remitente, password)
             smtp.send_message(msg)
 
-        print(f"[MAIL SUCCESS]: Boleto enviado exitosamente a {destinatario_correo}")
+        print(f"[MAIL SUCCESS]: Boleto enviado a {destinatario_correo}")
         return True
     except Exception as e:
-        print(f"MAIL CRITICAL ERROR]: {e}")
-        return False
+        print(f"[MAIL TIMEOUT/ERROR]: El correo no se pudo enviar por restricciones de red: {e}")
+        return False  # Retorna falso pero deja que la aplicación siga su curso sin dar error 502
 
 
 @app.route('/login', methods=['GET', 'POST'])
