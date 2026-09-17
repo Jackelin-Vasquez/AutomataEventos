@@ -86,19 +86,28 @@ def generar_boleto():
     if 'usuario' not in session:
         return redirect(url_for('login'))
 
-    # OBTENER EL SIGUIENTE CÓDIGO SECUENCIAL AUTOMÁTICO DE LA BASE DE DATOS
     codigo = base_datos.obtener_siguiente_codigo()
-
-    asistente = request.form.get('asistente')
+    asistente = request.form.get('asistente', 'Invitado')
     id_evento = request.form.get('id_evento', 1)
     tipo = request.form.get('tipo', 'General')
     metodo = request.form.get('metodo', 'QR')
-    area = request.form.get('area', 'Zona VIP')
+    area = request.form.get('area', 'Zona General')
 
+    # Guardar en base de datos incluyendo el asistente
     base_datos.registrar_o_actualizar_boleto(codigo, asistente, id_evento, tipo, metodo, area)
 
+    # Obtener el nombre real del evento desde la BD para el PDF
+    conexion = base_datos.db.conectar()
+    cursor = conexion.cursor(dictionary=True)
+    cursor.execute("SELECT nombre_evento FROM eventos WHERE id_evento = %s", (int(str(id_evento).split('#')[-1]),))
+    evento_info = cursor.fetchone()
+    cursor.close()
+    conexion.close()
+
+    nombre_evento_real = evento_info['nombre_evento'] if evento_info else "Evento Principal"
+
     nombre_pdf = f"Boleto_{codigo}.pdf"
-    generador_pdf.crear_pdf_boleto(codigo, asistente, f"Evento #{id_evento}", tipo, nombre_pdf)
+    generador_pdf.crear_pdf_boleto(codigo, asistente, nombre_evento_real, tipo, nombre_pdf)
 
     return send_file(nombre_pdf, as_attachment=True)
 

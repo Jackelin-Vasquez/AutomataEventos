@@ -36,15 +36,15 @@ def crear_pdf_boleto(codigo, asistente, nombre_evento, tipo_entrada, ruta_salida
         c.setLineWidth(1)
         c.roundRect(ticket_x, ticket_y, ticket_w, ticket_h, 12, fill=True, stroke=True)
 
-        # Línea divisoria vertical interna del ticket (punteada)
+        # Línea divisoria vertical interna del ticket (punteada con setDash correcto)
         c.setStrokeColor(colors.HexColor("#e2e8f0"))
         c.setLineWidth(1)
-        c.setDash([4, 4]) # Método correcto en ReportLab para líneas punteadas
+        c.setDash([4, 4])
         c.line(ticket_x + 210, ticket_y + 20, ticket_x + 210, ticket_y + ticket_h - 20)
-        c.setDash() # Restaurar a línea sólida para el resto del documento
+        c.setDash() # Restaurar a línea sólida
 
         # --- SECCIÓN IZQUIERDA: Marca y Código QR ---
-        c.setFillColor(colors.HexColor("#0f172a")) # Texto oscuro elegante
+        c.setFillColor(colors.HexColor("#0f172a"))
         c.setFont("Helvetica-Bold", 18)
         c.drawString(ticket_x + 25, ticket_y + ticket_h - 35, "EventAccess")
 
@@ -64,41 +64,39 @@ def crear_pdf_boleto(codigo, asistente, nombre_evento, tipo_entrada, ruta_salida
 
         # Número de Boleto / Código
         c.setFont("Helvetica-Bold", 12)
-        c.setFillColor(colors.HexColor("#2563eb")) # Azul destacado
+        c.setFillColor(colors.HexColor("#2563eb"))
         c.drawString(start_text_x, ticket_y + ticket_h - 35, f"N° {codigo}")
 
-        # Nombre del Evento
+        # Nombre del Evento (Dinamico)
         c.setFont("Helvetica-Bold", 14)
         c.setFillColor(colors.HexColor("#1e293b"))
         c.drawString(start_text_x, ticket_y + ticket_h - 65, f"Evento: {nombre_evento}")
 
-        # Titular / Asistente
+        # Titular / Asistente (Dinamico)
         c.setFont("Helvetica", 11)
         c.setFillColor(colors.HexColor("#475569"))
         c.drawString(start_text_x, ticket_y + ticket_h - 95, f"Titular: {asistente}")
 
         # Tipo de Entrada y Estado
         c.setFont("Helvetica-Bold", 10)
-        c.setFillColor(colors.HexColor("#059669")) # Verde esmeralda
+        c.setFillColor(colors.HexColor("#059669"))
         c.drawString(start_text_x, ticket_y + ticket_h - 125, f"Clase / Acceso: {tipo_entrada}")
 
         c.setFont("Helvetica", 10)
         c.setFillColor(colors.HexColor("#64748b"))
         c.drawString(start_text_x + 180, ticket_y + ticket_h - 125, "Estado: VÁLIDA")
 
-        # Fecha simulada / Pie del boleto interno
+        # Pie del boleto interno
         c.setFont("Helvetica-Oblique", 9)
         c.setFillColor(colors.HexColor("#94a3b8"))
         c.drawString(start_text_x, ticket_y + 25, "Presente este pase al ingresar al recinto. Válido por 1 acceso.")
 
-        # Guardar documento PDF
         c.save()
 
     except Exception as e:
         print(f"Error generando PDF: {e}")
 
     finally:
-        # Limpiar archivo temporal de imagen QR de forma segura
         if os.path.exists(ruta_qr_temp):
             try:
                 os.remove(ruta_qr_temp)
