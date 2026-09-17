@@ -88,28 +88,37 @@ def generar_boleto():
 
     codigo = base_datos.obtener_siguiente_codigo()
     asistente = request.form.get('asistente', 'Invitado')
-    id_evento = request.form.get('id_evento', 1)
+    id_evento_raw = request.form.get('id_evento', '1')
     tipo = request.form.get('tipo', 'General')
     metodo = request.form.get('metodo', 'QR')
     area = request.form.get('area', 'Zona General')
 
-    # Guardar en base de datos incluyendo el asistente
+    # Limpiar y extraer de forma segura el ID numérico del evento
+    try:
+        id_evento = int(''.join(filter(str.isdigit, str(id_evento_raw))))
+        if id_evento == 0:
+            id_evento = 1
+    except ValueError:
+        id_evento = 1
+
+    # Guardar en base de datos incluyendo el asistente y el ID limpio
     base_datos.registrar_o_actualizar_boleto(codigo, asistente, id_evento, tipo, metodo, area)
 
-    # Obtener el nombre real del evento desde la BD para el PDF
+    # Obtener el nombre real y exacto del evento desde la BD para el PDF
     conexion = base_datos.db.conectar()
     cursor = conexion.cursor(dictionary=True)
-    cursor.execute("SELECT nombre_evento FROM eventos WHERE id_evento = %s", (int(str(id_evento).split('#')[-1]),))
+    cursor.execute("SELECT nombre_evento FROM eventos WHERE id_evento = %s", (id_evento,))
     evento_info = cursor.fetchone()
     cursor.close()
     conexion.close()
 
-    nombre_evento_real = evento_info['nombre_evento'] if evento_info else "Evento Principal"
+    nombre_evento_real = evento_info['nombre_evento'] if evento_info and evento_info.get('nombre_evento') else "Evento Principal"
 
-    nombre_pdf = f"Boleto_{codigo}.pdf"
-    generador_pdf.crear_pdf_boleto(codigo, asistente, nombre_evento_real, tipo, nombre_pdf)
+    # Guardar el PDF temporalmente en /tmp para compatibilidad total con Render
+    ruta_pdf = os.path.join('/tmp', f"Boleto_{codigo}.pdf")
+    generador_pdf.crear_pdf_boleto(codigo, asistente, nombre_evento_real, tipo, ruta_pdf)
 
-    return send_file(nombre_pdf, as_attachment=True)
+    return send_file(ruta_pdf, as_attachment=True)
 
 
 @app.route('/api/eventos')
