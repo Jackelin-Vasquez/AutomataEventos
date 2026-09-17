@@ -56,16 +56,15 @@ class GestorBaseDatosMySQL:
                     )
                 """)
 
-                # Migración: Agregar columnas si la tabla 'eventos' ya existía sin ellas
                 try:
                     cursor.execute("ALTER TABLE eventos ADD COLUMN tipos_entrada VARCHAR(255) DEFAULT 'VIP,General'")
                 except Error:
-                    pass  # La columna ya existe
+                    pass
 
                 try:
                     cursor.execute("ALTER TABLE eventos ADD COLUMN areas_acceso VARCHAR(255) DEFAULT 'Zona VIP,Zona General'")
                 except Error:
-                    pass  # La columna ya existe
+                    pass
 
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS boletos (
@@ -107,8 +106,31 @@ class GestorBaseDatosMySQL:
             print(f"Error de conexión con MySQL: {e}")
             return None
 
+    def obtener_siguiente_codigo(self):
+        """Genera el siguiente código secuencial numérico (Ej: EVT126)."""
+        conexion = self.conectar()
+        if not conexion:
+            return "EVT126"
+
+        try:
+            cursor = conexion.cursor()
+            cursor.execute("SELECT codigo FROM boletos WHERE codigo REGEXP '^EVT[0-9]+$' ORDER BY LENGTH(codigo) DESC, codigo DESC LIMIT 1")
+            resultado = cursor.fetchone()
+            cursor.close()
+            conexion.close()
+
+            if not resultado:
+                return "EVT126"
+
+            ultimo_codigo = resultado[0]
+            solo_numeros = int(''.join(filter(str.isdigit, ultimo_codigo)))
+            siguiente_numero = solo_numeros + 1
+            return f"EVT{siguiente_numero}"
+        except Exception as e:
+            print(f"Error generando código secuencial: {e}")
+            return "EVT126"
+
     def crear_evento(self, nombre_evento, tipos_entrada="VIP,General", areas_acceso="Zona VIP,Zona General"):
-        """Permite al Administrador registrar un nuevo evento con sus opciones."""
         conexion = self.conectar()
         if not conexion:
             return False
@@ -130,7 +152,6 @@ class GestorBaseDatosMySQL:
             return False
 
     def obtener_eventos(self):
-        """Retorna la lista de eventos disponibles con sus tipos y áreas."""
         conexion = self.conectar()
         if not conexion:
             return []
@@ -143,7 +164,6 @@ class GestorBaseDatosMySQL:
         return eventos
 
     def obtener_boletos_activos(self):
-        """Retorna la lista de códigos de boletos registrados."""
         conexion = self.conectar()
         if not conexion:
             return []
@@ -156,7 +176,6 @@ class GestorBaseDatosMySQL:
         return [f[0] for f in filas]
 
     def consultar_y_generar_cadena(self, codigo_entrada):
-        """Genera la cadena para el AFND en base a la información del boleto."""
         conexion = self.conectar()
         if not conexion:
             return "qqe", "ERROR: Sin conexión a MySQL"
@@ -279,8 +298,6 @@ class GestorBaseDatosMySQL:
         conexion.close()
 
 
-
-
 # --- INSTANCIA GLOBAL Y EXPOSICIÓN DE FUNCIONES ---
 db = GestorBaseDatosMySQL()
 
@@ -292,7 +309,4 @@ registrar_o_actualizar_boleto = db.registrar_o_actualizar_boleto
 consultar_y_generar_cadena = db.consultar_y_generar_cadena
 marcar_como_usada = db.marcar_como_usada
 reiniciar_boletos_prueba = db.reiniciar_boletos_prueba
-
-
-if __name__ == "__main__":
-    print("Base de datos inicializada correctamente.")
+obtener_siguiente_codigo = db.obtener_siguiente_codigo

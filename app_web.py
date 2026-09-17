@@ -86,7 +86,9 @@ def generar_boleto():
     if 'usuario' not in session:
         return redirect(url_for('login'))
 
-    codigo = request.form.get('codigo')
+    # OBTENER EL SIGUIENTE CÓDIGO SECUENCIAL AUTOMÁTICO DE LA BASE DE DATOS
+    codigo = base_datos.obtener_siguiente_codigo()
+
     asistente = request.form.get('asistente')
     id_evento = request.form.get('id_evento', 1)
     tipo = request.form.get('tipo', 'General')
@@ -111,6 +113,12 @@ def api_eventos():
 def api_boletos():
     boletos = base_datos.obtener_todos_los_boletos()
     return jsonify(boletos)
+
+
+@app.route('/api/siguiente_codigo')
+def api_siguiente_codigo():
+    codigo = base_datos.obtener_siguiente_codigo()
+    return jsonify({"codigo": codigo})
 
 
 @app.route('/api/validar_qr', methods=['POST'])
