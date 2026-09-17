@@ -57,7 +57,8 @@ class GestorBaseDatosMySQL:
                 for col_query in [
                     "ALTER TABLE eventos ADD COLUMN tipos_entrada VARCHAR(255) DEFAULT 'VIP,General'",
                     "ALTER TABLE eventos ADD COLUMN areas_acceso VARCHAR(255) DEFAULT 'Zona VIP,Zona General'",
-                    "ALTER TABLE eventos ADD COLUMN capacidad INT DEFAULT 100"
+                    "ALTER TABLE eventos ADD COLUMN capacidad INT DEFAULT 100",
+                    "ALTER TABLE boletos ADD COLUMN correo VARCHAR(100) DEFAULT ''"
                 ]:
                     try:
                         cursor.execute(col_query)
@@ -68,6 +69,7 @@ class GestorBaseDatosMySQL:
                     CREATE TABLE IF NOT EXISTS boletos (
                         codigo VARCHAR(25) PRIMARY KEY,
                         asistente VARCHAR(100) DEFAULT 'Invitado General',
+                        correo VARCHAR(100) DEFAULT '',
                         tipo_entrada VARCHAR(50) NOT NULL,
                         metodo_validacion VARCHAR(20) NOT NULL,
                         id_evento INT NOT NULL,
@@ -80,6 +82,7 @@ class GestorBaseDatosMySQL:
 
                 try:
                     cursor.execute("ALTER TABLE boletos ADD COLUMN asistente VARCHAR(100) DEFAULT 'Invitado General'")
+                    cursor.execute("ALTER TABLE boletos ADD COLUMN correo VARCHAR(100) DEFAULT ''")
                     conexion.commit()
                 except Error:
                     pass
@@ -91,10 +94,10 @@ class GestorBaseDatosMySQL:
                         VALUES (1, 'Concierto Principal 2026', 'VIP,General', 'Zona VIP,Zona General', 100)
                     """)
                     cursor.execute("""
-                        INSERT INTO boletos (codigo, asistente, tipo_entrada, metodo_validacion, id_evento, area_acceso, estado) VALUES
-                        ('EVT123', 'Juan Pérez', 'VIP', 'QR', 1, 'Zona VIP', 'valida'),
-                        ('EVT124', 'María Gómez', 'General', 'QR', 1, 'Zona General', 'valida'),
-                        ('EVT125', 'Carlos Ruiz', 'VIP', 'QR', 1, 'Zona VIP', 'usada')
+                        INSERT INTO boletos (codigo, asistente, correo, tipo_entrada, metodo_validacion, id_evento, area_acceso, estado) VALUES
+                        ('EVT123', 'Juan Pérez', 'juan@ejemplo.com', 'VIP', 'QR', 1, 'Zona VIP', 'valida'),
+                        ('EVT124', 'María Gómez', 'maria@ejemplo.com', 'General', 'QR', 1, 'Zona General', 'valida'),
+                        ('EVT125', 'Carlos Ruiz', 'carlos@ejemplo.com', 'VIP', 'QR', 1, 'Zona VIP', 'usada')
                     """)
                     conexion.commit()
 
@@ -306,7 +309,7 @@ class GestorBaseDatosMySQL:
             print(f"Error al actualizar estado en MySQL: {e}")
             return False
 
-    def registrar_o_actualizar_boleto(self, codigo, asistente, id_evento, tipo, metodo="QR", area="Zona VIP"):
+    def registrar_o_actualizar_boleto(self, codigo, asistente, id_evento, tipo, metodo="QR", area="Zona VIP", correo=""):
         conexion = self.conectar()
         if not conexion:
             return False
@@ -316,12 +319,12 @@ class GestorBaseDatosMySQL:
                 id_evento = int(id_evento.split("#")[-1])
 
             query = """
-                INSERT INTO boletos (codigo, asistente, tipo_entrada, metodo_validacion, id_evento, area_acceso, estado)
-                VALUES (%s, %s, %s, %s, %s, %s, 'valida')
+                INSERT INTO boletos (codigo, asistente, correo, tipo_entrada, metodo_validacion, id_evento, area_acceso, estado)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, 'valida')
                 ON DUPLICATE KEY UPDATE 
-                    asistente=%s, tipo_entrada=%s, metodo_validacion=%s, id_evento=%s, area_acceso=%s, estado='valida'
+                    asistente=%s, correo=%s, tipo_entrada=%s, metodo_validacion=%s, id_evento=%s, area_acceso=%s, estado='valida'
             """
-            cursor.execute(query, (codigo, asistente, tipo, metodo, int(id_evento), area, asistente, tipo, metodo, int(id_evento), area))
+            cursor.execute(query, (codigo, asistente, correo, tipo, metodo, int(id_evento), area, asistente, correo, tipo, metodo, int(id_evento), area))
             conexion.commit()
             cursor.close()
             conexion.close()
@@ -336,8 +339,8 @@ class GestorBaseDatosMySQL:
             return []
         cursor = conexion.cursor(dictionary=True)
         query = """
-            SELECT b.codigo, b.asistente, b.tipo_entrada AS tipo, b.metodo_validacion, 
-                   e.nombre_evento AS evento, b.area_acceso, b.estado
+            SELECT b.codigo, b.asistente, b.correo, b.tipo_entrada AS tipo, b.metodo_validacion, 
+                   e.nombre_evento AS evento, b.id_evento, b.area_acceso, b.estado
             FROM boletos b
             JOIN eventos e ON b.id_evento = e.id_evento
         """
@@ -364,6 +367,26 @@ class GestorBaseDatosMySQL:
         cursor.close()
         conexion.close()
 
+    def actualizar_boleto(self, codigo, asistente, correo, id_evento, tipo, area):
+        """Actualiza la información de un boleto existente en la base de datos."""
+        conexion = self.conectar()
+        if conexion:
+            try:
+                cursor = conexion.cursor()
+                query = """
+                    UPDATE boletos 
+                    SET asistente = %s, correo = %s, id_evento = %s, tipo_entrada = %s, area_acceso = %s 
+                    WHERE codigo = %s
+                """
+                cursor.execute(query, (asistente, correo, int(id_evento), tipo, area, codigo))
+                conexion.commit()
+                cursor.close()
+                conexion.close()
+                return True
+            except Exception as e:
+                print(f"Error al actualizar boleto: {e}")
+                conexion.close()
+        return False
 
 # --- INSTANCIA GLOBAL Y EXPOSICIÓN DE FUNCIONES ---
 db = GestorBaseDatosMySQL()
@@ -379,6 +402,7 @@ consultar_y_generar_cadena = db.consultar_y_generar_cadena
 marcar_como_usada = db.marcar_como_usada
 reiniciar_boletos_prueba = db.reiniciar_boletos_prueba
 obtener_siguiente_codigo = db.obtener_siguiente_codigo
+actualizar_boleto = db.actualizar_boleto
 
 if __name__ == "__main__":
     print("Base de datos inicializada correctamente.")

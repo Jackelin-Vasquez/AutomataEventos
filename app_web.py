@@ -224,8 +224,9 @@ def generar_boleto():
         codigo = base_datos.obtener_siguiente_codigo()
         nombre_titular_ticket = asistente
 
-        # Guardar en base de datos
-        base_datos.registrar_o_actualizar_boleto(codigo, nombre_titular_ticket, id_evento, tipo, metodo, area)
+        # Guardar en base de datos (¡Agregamos correo_asistente al final!)
+        base_datos.registrar_o_actualizar_boleto(codigo, nombre_titular_ticket, id_evento, tipo, metodo, area,
+                                                 correo_asistente)
 
         # Generar PDF individual
         ruta_pdf = os.path.join('/tmp', f"Boleto_{codigo}.pdf")
@@ -273,6 +274,25 @@ def validar_qr():
     codigo = data.get('codigo', '')
     resultado = base_datos.validar_y_cambiar_estado(codigo)
     return jsonify(resultado)
+
+
+@app.route('/actualizar_boleto', methods=['POST'])
+def actualizar_boleto_web():
+    if 'usuario' not in session or session.get('rol') != 'admin':
+        return jsonify({"exito": False, "mensaje": "Acceso no autorizado"}), 403
+
+    codigo = request.form.get('codigo')
+    asistente = request.form.get('asistente')
+    correo = request.form.get('correo', '')
+    id_evento = request.form.get('id_evento')
+    tipo = request.form.get('tipo')
+    area = request.form.get('area')
+
+    exito = base_datos.actualizar_boleto(codigo, asistente, correo, id_evento, tipo, area)
+
+    if exito:
+        return redirect(url_for('index'))
+    return "Error al actualizar el boleto en la base de datos.", 400
 
 
 if __name__ == '__main__':
