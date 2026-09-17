@@ -167,7 +167,7 @@
                 </form>
             </div>
 
-        </div> <!-- <-- AQUÍ SE CIERRA CORRECTAMENTE LA COLUMNA IZQUIERDA -->
+        </div>
 
         <!-- Columna Derecha: Listado de Boletos -->
         <div class="md:col-span-7">
@@ -221,7 +221,7 @@
             contenedor.appendChild(nuevaFila);
         }
 
-        // Interceptar el envío del formulario para validar que la suma de categorías coincida con el límite total
+        // Interceptar el envío del formulario para validar que la suma de categorías NO sobrepase el límite total
         document.getElementById('form-crear-evento')?.addEventListener('submit', function(e) {
             const limiteTotalInput = parseInt(document.getElementById('input_capacidad_total').value) || 0;
             const filas = document.querySelectorAll('.categoria-row');
@@ -238,10 +238,10 @@
                 }
             });
 
-            // Validar coincidencia exacta
-            if (sumaCategorias !== limiteTotalInput) {
+            // Validar que la suma NO sobrepase el límite total del evento
+            if (sumaCategorias > limiteTotalInput) {
                 e.preventDefault(); // Cancela el envío
-                alert(`Error de validación:\nLa suma de los boletos por categoría (${sumaCategorias}) no coincide con el límite total del evento (${limiteTotalInput}). ¡Deben ser idénticos!`);
+                alert(`Error de validación:\nLa suma de los boletos por categoría (${sumaCategorias}) supera el límite total del evento (${limiteTotalInput}). ¡No debe sobrepasarlo!`);
                 return false;
             }
 
