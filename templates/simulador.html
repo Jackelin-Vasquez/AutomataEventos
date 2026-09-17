@@ -1708,7 +1708,7 @@
                     <input
                         type="text"
                         id="cadena"
-                        placeholder="Ejemplo: qqvva"
+                        placeholder="Escriba un símbolo: q, g, v, i, c, a, e"
                         autocomplete="off">
 
 
@@ -1877,7 +1877,8 @@
                         class="mensaje">
 
                         Listo para comenzar.
-                        Ingrese una cadena y presione Procesar.
+                        Escriba un símbolo (q, g, v, i, c, a o e)
+                        y el autómata avanzará automáticamente.
 
                     </div>
 
@@ -2273,9 +2274,17 @@ const ESTADOS_ACEPTACION = [
 ];
 
 
-let cadena = "";
+/*
+   MODELO DE ENTRADA "SÍMBOLO A SÍMBOLO"
 
-let posicion = 0;
+   Ya no se escribe la cadena completa de una vez.
+   Cada símbolo que el usuario escribe se procesa al
+   instante: el autómata avanza, el campo se limpia
+   solo, y "cadena" va guardando (acumulando) todo lo
+   ya consumido para mostrarlo y para poder retroceder.
+*/
+
+let cadena = "";
 
 let estadosActivos = ["Q0"];
 
@@ -2288,9 +2297,11 @@ let historial = [];
 */
 let tipoDetectado = null;
 
-/* Copia intacta de la cadena escrita por el usuario,
-   usada para poder retroceder y restaurar el campo. */
-let cadenaOriginal = "";
+/* true cuando el recorrido ya llegó a un estado final
+   (Q6, Q7, Q8 o sin transición posible). Mientras esté
+   en true no se aceptan más símbolos hasta Retroceder
+   o Reiniciar. */
+let terminado = false;
 
 
 /* ========================================================
@@ -2779,8 +2790,7 @@ function actualizarBotones() {
     if (btnPaso) {
 
         btnPaso.disabled =
-            cadena !== "" &&
-            posicion >= cadena.length;
+            terminado;
 
     }
 
@@ -2937,65 +2947,95 @@ function mostrarResultado(
 
 
 /* ========================================================
-   AVANZAR UN PASO
+   FILTRAR UN VALOR CRUDO DEL CAMPO
+
+   Separa los símbolos válidos (del alfabeto) de los
+   inválidos, sin tocar el campo de entrada.
 ======================================================== */
 
 
-function avanzarPaso() {
+function filtrarCadena(valorCrudo) {
 
-    const campo =
-        document.getElementById(
-            "cadena"
-        );
+    const original =
+        valorCrudo.toLowerCase();
 
 
-    if (cadena === "") {
+    let limpio = "";
 
-        cadena =
-            campo.value
-            .trim()
-            .toLowerCase();
+    let rechazados = [];
 
 
-        if (!validarEntrada(cadena)) {
+    for (
+        let i = 0;
+        i < original.length;
+        i++
+    ) {
 
-            cadena = "";
+        if (
+            ALFABETO.includes(original[i])
+        ) {
 
-            return;
+            limpio += original[i];
 
         }
 
+        else if (
+            !rechazados.includes(original[i])
+        ) {
 
-        /* Se guarda la cadena completa para poder
-           retroceder y volver a mostrarla. */
+            rechazados.push(original[i]);
 
-        cadenaOriginal = cadena;
+        }
 
     }
 
 
-    /* ==============================================
-       NO QUEDAN SÍMBOLOS POR PROCESAR
-    ============================================== */
+    return {
+        limpio: limpio,
+        rechazados: rechazados
+    };
 
-    if (
-        posicion >= cadena.length
-    ) {
-
-        document.getElementById(
-            "mensaje"
-        ).className =
-            "mensaje aviso";
+}
 
 
-        document.getElementById(
-            "mensaje"
-        ).textContent =
-            "La cadena ya fue procesada por completo. " +
-            "Use Retroceder o Reiniciar.";
+/* ========================================================
+   AVISO: EL RECORRIDO YA TERMINÓ
+======================================================== */
 
 
-        actualizarBotones();
+function mostrarAvisoTerminado() {
+
+    document.getElementById(
+        "mensaje"
+    ).className =
+        "mensaje aviso";
+
+
+    document.getElementById(
+        "mensaje"
+    ).textContent =
+        "El recorrido ya llegó a un estado final. " +
+        "Use Retroceder o Reiniciar para continuar.";
+
+}
+
+
+/* ========================================================
+   CONSUMIR UN ÚNICO SÍMBOLO
+
+   Es el corazón del simulador: procesa un solo símbolo
+   ya validado, mueve el autómata, dibuja las flechas,
+   guarda el paso en el historial y acumula el símbolo
+   en "cadena". No toca el campo de texto: de eso se
+   encargan quienes llaman a esta función.
+======================================================== */
+
+
+function consumirCaracter(simbolo) {
+
+    if (terminado) {
+
+        mostrarAvisoTerminado();
 
         return;
 
@@ -3009,6 +3049,9 @@ function avanzarPaso() {
     if (
         estadosActivos.length === 0
     ) {
+
+        terminado = true;
+
 
         document.getElementById(
             "mensaje"
@@ -3028,10 +3071,6 @@ function avanzarPaso() {
         return;
 
     }
-
-
-    const simbolo =
-        cadena[posicion];
 
 
     const anteriores =
@@ -3085,7 +3124,7 @@ function avanzarPaso() {
     document.getElementById(
         "pasoActual"
     ).textContent =
-        posicion + 1;
+        historial.length + 1;
 
 
     limpiarFlechas();
@@ -3129,7 +3168,7 @@ function avanzarPaso() {
 
     historial.push({
 
-        numero: posicion + 1,
+        numero: historial.length + 1,
 
         simbolo: simbolo,
 
@@ -3146,26 +3185,15 @@ function avanzarPaso() {
     });
 
 
+    /* El símbolo consumido se acumula en "cadena"
+       (esto es lo que muestra la etiqueta "Consumido"
+       y lo que permite reconstruir la ruta completa). */
+
+    cadena += simbolo;
+
+
     estadosActivos =
         siguientes;
-
-
-    renderPasos();
-
-
-    posicion++;
-
-
-    /* ==============================================
-       LIMPIEZA PROGRESIVA DEL CAMPO DE ENTRADA
-
-       Cada símbolo ya consumido se elimina del
-       campo, de modo que solo queda visible lo
-       que falta por procesar.
-    ============================================== */
-
-    campo.value =
-        cadena.slice(posicion);
 
 
     const consumidos =
@@ -3177,10 +3205,12 @@ function avanzarPaso() {
     if (consumidos) {
 
         consumidos.textContent =
-            cadena.slice(0, posicion) || "—";
+            cadena || "—";
 
     }
 
+
+    renderPasos();
 
     actualizarEstados();
 
@@ -3196,6 +3226,9 @@ function avanzarPaso() {
     if (
         siguientes.length === 0
     ) {
+
+        terminado = true;
+
 
         mostrarResultado(
             false,
@@ -3214,6 +3247,9 @@ function avanzarPaso() {
         ).textContent =
             "El autómata no tiene una transición válida.";
 
+
+        actualizarBotones();
+
         return;
 
     }
@@ -3226,6 +3262,9 @@ function avanzarPaso() {
     if (
         siguientes.includes("Q8")
     ) {
+
+        terminado = true;
+
 
         mostrarResultado(
             false,
@@ -3244,79 +3283,162 @@ function avanzarPaso() {
         ).textContent =
             "La ruta actual termina en rechazo.";
 
+
+        actualizarBotones();
+
         return;
 
     }
 
 
     /* ==============================================
-       FIN DE CADENA
+       ESTADO DE ACEPTACIÓN (Q6 / Q7)
+
+       No hay una longitud de cadena predefinida: en
+       cuanto el recorrido llega a Q6 o Q7 se declara
+       aceptado, porque ninguno de los dos tiene
+       transiciones salientes.
     ============================================== */
 
-    if (
-        posicion === cadena.length
-    ) {
-
-        const aceptada =
-            siguientes.some(
-                estado =>
-                    ESTADOS_ACEPTACION.includes(
-                        estado
-                    )
-            );
+    const aceptada =
+        siguientes.some(
+            estado =>
+                ESTADOS_ACEPTACION.includes(
+                    estado
+                )
+        );
 
 
-        if (aceptada) {
+    if (aceptada) {
 
-            const final =
-                siguientes.includes("Q6")
-                    ? "Q6 (acceso GENERAL autorizado)"
-                    : "Q7 (acceso VIP autorizado)";
+        terminado = true;
 
 
-            mostrarResultado(
-                true,
-                "CADENA ACEPTADA",
-                "La cadena terminó en el estado de aceptación " +
-                final +
-                "."
-            );
+        const final =
+            siguientes.includes("Q6")
+                ? "Q6 (acceso GENERAL autorizado)"
+                : "Q7 (acceso VIP autorizado)";
 
 
-            document.getElementById(
-                "mensaje"
-            ).className =
-                "mensaje";
+        mostrarResultado(
+            true,
+            "CADENA ACEPTADA",
+            "La cadena terminó en el estado de aceptación " +
+            final +
+            "."
+        );
 
 
-            document.getElementById(
-                "mensaje"
-            ).textContent =
-                "La cadena fue aceptada correctamente.";
-
-        }
-
-        else {
-
-            mostrarResultado(
-                false,
-                "CADENA RECHAZADA",
-                "La cadena terminó sin llegar a Q6 ni Q7."
-            );
+        document.getElementById(
+            "mensaje"
+        ).className =
+            "mensaje";
 
 
-            document.getElementById(
-                "mensaje"
-            ).className =
-                "mensaje error";
+        document.getElementById(
+            "mensaje"
+        ).textContent =
+            "La cadena fue aceptada correctamente.";
 
 
-            document.getElementById(
-                "mensaje"
-            ).textContent =
-                "Ninguna ruta llegó a un estado de aceptación.";
+        actualizarBotones();
 
-        }
+        return;
+
+    }
+
+
+    /* ==============================================
+       SÍMBOLO PROCESADO, EL RECORRIDO CONTINÚA
+    ============================================== */
+
+    document.getElementById(
+        "mensaje"
+    ).className =
+        "mensaje";
+
+
+    document.getElementById(
+        "mensaje"
+    ).textContent =
+        "Símbolo '" +
+        simbolo +
+        "' procesado. Escriba el siguiente símbolo.";
+
+}
+
+
+/* ========================================================
+   AVANZAR UN PASO (BOTÓN)
+
+   Toma el contenido actual del campo, se queda con el
+   primer símbolo válido, lo consume y limpia el campo.
+   Si había más de un símbolo escrito, el resto se deja
+   pendiente para el próximo clic.
+======================================================== */
+
+
+function avanzarPaso() {
+
+    const campo =
+        document.getElementById(
+            "cadena"
+        );
+
+
+    const resultado =
+        filtrarCadena(campo.value);
+
+
+    campo.value = "";
+
+
+    if (resultado.rechazados.length > 0) {
+
+        avisarSimboloInvalido(
+            resultado.rechazados
+        );
+
+    }
+
+
+    if (resultado.limpio.length === 0) {
+
+        document.getElementById(
+            "mensaje"
+        ).className =
+            "mensaje aviso";
+
+
+        document.getElementById(
+            "mensaje"
+        ).textContent =
+            "Escriba un símbolo (q, g, v, i, c, a o e) " +
+            "para avanzar un paso.";
+
+        return;
+
+    }
+
+
+    if (terminado) {
+
+        mostrarAvisoTerminado();
+
+        return;
+
+    }
+
+
+    consumirCaracter(
+        resultado.limpio[0]
+    );
+
+
+    if (resultado.limpio.length > 1) {
+
+        campo.value =
+            resultado.limpio.slice(1);
 
     }
 
@@ -3345,19 +3467,24 @@ function retrocederPaso() {
     const paso = historial.pop();
 
 
-    posicion = paso.numero - 1;
-
     estadosActivos = paso.anteriores;
 
     tipoDetectado = paso.tipoAntes;
 
-
-    const campo =
-        document.getElementById("cadena");
+    terminado = false;
 
 
-    campo.value =
-        cadena.slice(posicion);
+    /* Se retira el último símbolo acumulado en "cadena";
+       el campo de entrada queda vacío, listo para que el
+       usuario vuelva a escribir el siguiente símbolo. */
+
+    cadena =
+        cadena.slice(0, cadena.length - 1);
+
+
+    document.getElementById(
+        "cadena"
+    ).value = "";
 
 
     const consumidos =
@@ -3367,7 +3494,7 @@ function retrocederPaso() {
     if (consumidos) {
 
         consumidos.textContent =
-            cadena.slice(0, posicion) || "—";
+            cadena || "—";
 
     }
 
@@ -3378,7 +3505,7 @@ function retrocederPaso() {
     document.getElementById(
         "pasoActual"
     ).textContent =
-        posicion;
+        historial.length;
 
 
     document.getElementById(
@@ -3412,8 +3539,8 @@ function retrocederPaso() {
         "mensaje"
     ).textContent =
         "Se retrocedió al paso " +
-        posicion +
-        ". Puede continuar con Avanzar paso.";
+        historial.length +
+        ". Puede continuar escribiendo el siguiente símbolo.";
 
 
     renderPasos();
@@ -3475,7 +3602,12 @@ function mostrarTipo() {
 
 
 /* ========================================================
-   PROCESAR CADENA COMPLETA
+   PROCESAR (varios símbolos escritos o pegados de una vez)
+
+   Si el usuario pega varios símbolos juntos (por ejemplo
+   "qqvva"), este botón los reproduce uno por uno con una
+   breve animación, en vez de exigir que se escriban de a
+   un símbolo por vez.
 ======================================================== */
 
 
@@ -3487,60 +3619,101 @@ function procesarCadena() {
         );
 
 
-    const valor =
-        campo.value
-        .trim()
-        .toLowerCase();
+    const resultado =
+        filtrarCadena(campo.value);
 
 
-    if (
-        !validarEntrada(valor)
-    ) {
+    campo.value = "";
+
+
+    if (resultado.rechazados.length > 0) {
+
+        avisarSimboloInvalido(
+            resultado.rechazados
+        );
+
+    }
+
+
+    if (resultado.limpio.length === 0) {
+
+        document.getElementById(
+            "mensaje"
+        ).className =
+            "mensaje aviso";
+
+
+        document.getElementById(
+            "mensaje"
+        ).textContent =
+            "Escriba al menos un símbolo para procesar.";
 
         return;
 
     }
 
 
-    reiniciar(false);
+    if (terminado) {
+
+        mostrarAvisoTerminado();
+
+        return;
+
+    }
 
 
-    cadena = valor;
-
-    cadenaOriginal = valor;
-
-
-    procesarAutomaticamente();
+    reproducirCola(
+        resultado.limpio.split("")
+    );
 
 }
 
 
 /* ========================================================
-   PROCESAMIENTO AUTOMÁTICO
+   REPRODUCIR UNA COLA DE SÍMBOLOS PENDIENTES
+
+   Consume el primer símbolo de la cola y, si quedan más
+   y el recorrido no ha terminado, programa el siguiente
+   con un pequeño retraso para verlo avanzar en el grafo.
 ======================================================== */
 
 
-function procesarAutomaticamente() {
+function reproducirCola(pendientes) {
 
-    if (
-        posicion >= cadena.length
-    ) {
+    if (pendientes.length === 0) {
 
         return;
 
     }
 
 
-    avanzarPaso();
+    if (terminado) {
+
+        mostrarAvisoTerminado();
+
+        return;
+
+    }
+
+
+    consumirCaracter(pendientes[0]);
+
+
+    const resto =
+        pendientes.slice(1);
 
 
     if (
-        posicion < cadena.length &&
-        estadosActivos.length > 0
+        resto.length > 0 &&
+        !terminado
     ) {
 
         setTimeout(
-            procesarAutomaticamente,
+            function() {
+
+                reproducirCola(resto);
+
+            },
             500
         );
 
@@ -3569,15 +3742,13 @@ function reiniciar(
 
     cadena = "";
 
-    posicion = 0;
-
     estadosActivos = ["Q0"];
 
     historial = [];
 
     tipoDetectado = null;
 
-    cadenaOriginal = "";
+    terminado = false;
 
 
     const etiquetaTipo =
@@ -3644,7 +3815,7 @@ function reiniciar(
     document.getElementById(
         "mensaje"
     ).textContent =
-        "Listo para comenzar. Ingrese una cadena y presione Procesar.";
+        "Listo para comenzar. Escriba un símbolo y el autómata avanzará automáticamente.";
 
 
     document.getElementById(
@@ -3884,67 +4055,57 @@ document.getElementById(
     "input",
     function() {
 
-        const original =
-            this.value.toLowerCase();
-
-
-        let limpio = "";
-
-        let rechazados = [];
-
-
-        for (
-            let i = 0;
-            i < original.length;
-            i++
-        ) {
-
-            if (
-                ALFABETO.includes(original[i])
-            ) {
-
-                limpio += original[i];
-
-            }
-
-            else if (
-                !rechazados.includes(original[i])
-            ) {
-
-                rechazados.push(original[i]);
-
-            }
-
-        }
-
-
-        this.value = limpio;
+        const resultado =
+            filtrarCadena(this.value);
 
 
         /* ==========================================
-           Si el usuario modifica la cadena, se
-           descarta el recorrido anterior para que
-           "Avanzar paso" siempre trabaje sobre lo
-           que está escrito en este momento.
+           CONSUMO INMEDIATO, SÍMBOLO POR SÍMBOLO
+
+           No hace falta escribir toda la cadena: en
+           cuanto se escribe un símbolo válido, el
+           autómata lo procesa de inmediato y el campo
+           queda vacío otra vez, listo para el próximo
+           símbolo. Esto también funciona si se pega
+           más de un símbolo a la vez (se consumen en
+           orden, uno tras otro).
         ========================================== */
 
-        if (
-            historial.length > 0 ||
-            cadena !== ""
+        this.value = "";
+
+
+        if (resultado.rechazados.length > 0) {
+
+            avisarSimboloInvalido(
+                resultado.rechazados
+            );
+
+        }
+
+
+        for (
+            const simbolo
+            of resultado.limpio
         ) {
 
-            reiniciar(false);
+            if (terminado) {
+
+                mostrarAvisoTerminado();
+
+                break;
+
+            }
+
+
+            consumirCaracter(simbolo);
 
         }
 
 
-        if (rechazados.length > 0) {
-
-            avisarSimboloInvalido(rechazados);
-
-        }
-
-        else if (limpio.length > 0) {
+        if (
+            resultado.rechazados.length === 0 &&
+            resultado.limpio.length > 0
+        ) {
 
             const texto =
                 document.getElementById(
@@ -3956,7 +4117,7 @@ document.getElementById(
 
                 texto.innerHTML =
                     "<strong>Validación de entrada:</strong> " +
-                    "La cadena es válida. " +
+                    "Símbolo aceptado. " +
                     "Símbolos permitidos: q, g, v, i, c, a, e.";
 
             }
