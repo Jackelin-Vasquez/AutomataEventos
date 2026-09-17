@@ -1708,7 +1708,7 @@
                     <input
                         type="text"
                         id="cadena"
-                        placeholder="Escriba un símbolo: q, g, v, i, c, a, e"
+                        placeholder="Escriba un símbolo y presione Avanzar paso"
                         autocomplete="off">
 
 
@@ -4060,18 +4060,19 @@ document.getElementById(
 
 
         /* ==========================================
-           CONSUMO INMEDIATO, SÍMBOLO POR SÍMBOLO
+           SOLO SE FILTRA, NO SE CONSUME TODAVÍA
 
-           No hace falta escribir toda la cadena: en
-           cuanto se escribe un símbolo válido, el
-           autómata lo procesa de inmediato y el campo
-           queda vacío otra vez, listo para el próximo
-           símbolo. Esto también funciona si se pega
-           más de un símbolo a la vez (se consumen en
-           orden, uno tras otro).
+           El campo se limpia de símbolos inválidos,
+           pero el (los) símbolo(s) válido(s) se dejan
+           escritos a la espera de que el usuario
+           presione "Avanzar paso" (o Enter / Procesar)
+           para que el autómata los consuma. Así el
+           botón de paso a paso siempre tiene algo que
+           procesar cuando se le hace clic.
         ========================================== */
 
-        this.value = "";
+        this.value =
+            resultado.limpio;
 
 
         if (resultado.rechazados.length > 0) {
@@ -4082,30 +4083,7 @@ document.getElementById(
 
         }
 
-
-        for (
-            const simbolo
-            of resultado.limpio
-        ) {
-
-            if (terminado) {
-
-                mostrarAvisoTerminado();
-
-                break;
-
-            }
-
-
-            consumirCaracter(simbolo);
-
-        }
-
-
-        if (
-            resultado.rechazados.length === 0 &&
-            resultado.limpio.length > 0
-        ) {
+        else if (resultado.limpio.length > 0) {
 
             const texto =
                 document.getElementById(
@@ -4117,8 +4095,8 @@ document.getElementById(
 
                 texto.innerHTML =
                     "<strong>Validación de entrada:</strong> " +
-                    "Símbolo aceptado. " +
-                    "Símbolos permitidos: q, g, v, i, c, a, e.";
+                    "Símbolo válido. Presione " +
+                    "<b>Avanzar paso</b> (o Enter) para procesarlo.";
 
             }
 
