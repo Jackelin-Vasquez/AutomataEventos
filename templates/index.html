@@ -19,12 +19,12 @@
             </div>
             <div class="flex items-center gap-4">
                 <span class="bg-blue-700 px-3 py-1 rounded-full text-sm font-medium">
-    {{ session.get('nombre', 'Usuario') }} ({{ session.get('rol', '').upper() }})
-</span>
+                    {{ session.get('nombre', 'Usuario') }} ({{ session.get('rol', '').upper() }})
+                </span>
                 {% if session.get('rol') == 'admin' %}
                 <a href="/simulador" class="hover:bg-blue-700 px-3 py-1.5 rounded-lg text-sm font-semibold transition">
-    Simulador AFND
-</a>
+                    Simulador AFND
+                </a>
                 {% endif %}
                 <a href="/escanear" class="hover:bg-blue-700 px-3 py-1.5 rounded-lg text-sm font-semibold transition">
                      Escáner QR
@@ -32,7 +32,6 @@
                 <a href="/logout" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition">
                     <i class="fa-solid fa-right-from-bracket"></i> Salir
                 </a>
-
             </div>
         </div>
     </nav>
@@ -49,24 +48,59 @@
                 <h2 class="text-lg font-bold text-slate-800 mb-4">
                     Configurar Nuevo Evento
                 </h2>
-                <form action="/crear_evento" method="POST" class="flex flex-col gap-3">
+                <form action="/crear_evento" method="POST" id="form-crear-evento" class="flex flex-col gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 mb-1">Nombre del Evento</label>
                         <input type="text" name="nombre_evento" placeholder="Ej. Gala 2026 / Concierto Rock" required
                             class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none">
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1">Tipos de Entrada</label>
-                            <input type="text" name="tipos_entrada" placeholder="VIP,General" value="VIP,General" required
-                                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1">Áreas Autorizadas</label>
-                            <input type="text" name="areas_acceso" placeholder="Zona VIP,Zona General" value="Zona VIP,Zona General" required
-                                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none">
-                        </div>
+
+                    <!-- Límite Total de Boletos del Evento -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Límite Total de Boletos del Evento</label>
+                        <input type="number" id="input_capacidad_total" placeholder="Ej. 180" min="1" required
+                            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none bg-slate-50 font-semibold">
                     </div>
+
+                    <!-- Categorías y Límites Dinámicos -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-xs font-semibold text-slate-500">Categorías y Límites por Tipo</label>
+                            <button type="button" onclick="agregarFilaCategoria()"
+                                class="text-xs text-blue-600 hover:text-blue-800 font-bold transition flex items-center gap-1">
+                                <i class="fa-solid fa-plus"></i> Agregar categoría
+                            </button>
+                        </div>
+
+                        <!-- Contenedor dinámico de filas -->
+                        <div id="contenedor-categorias" class="space-y-2 mb-2">
+                            <div class="flex gap-2 items-center categoria-row">
+                                <input type="text" placeholder="Ej. VIP" value="VIP" required
+                                    class="w-7/12 px-3 py-2 border rounded-lg text-sm outline-none cat-nombre">
+                                <input type="number" placeholder="Cantidad" value="30" min="1" required
+                                    class="w-4/12 px-3 py-2 border rounded-lg text-sm outline-none cat-cantidad">
+                                <div class="w-1/12 text-center text-slate-300"></div>
+                            </div>
+                            <div class="flex gap-2 items-center categoria-row">
+                                <input type="text" placeholder="Ej. General" value="General" required
+                                    class="w-7/12 px-3 py-2 border rounded-lg text-sm outline-none cat-nombre">
+                                <input type="number" placeholder="Cantidad" value="100" min="1" required
+                                    class="w-4/12 px-3 py-2 border rounded-lg text-sm outline-none cat-cantidad">
+                                <div class="w-1/12 text-center text-slate-300"></div>
+                            </div>
+                        </div>
+
+                        <!-- Inputs ocultos que enviarán la información empaquetada a Flask -->
+                        <input type="hidden" name="tipos_entrada" id="tipos_entrada_oculto">
+                        <input type="hidden" name="capacidad" id="capacidad_final_oculto">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Áreas Autorizadas (Opcional)</label>
+                        <input type="text" name="areas_acceso" placeholder="Zona VIP,Zona General" value="Zona VIP,Zona General" required
+                            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none">
+                    </div>
+
                     <button type="submit" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition shadow">
                         Guardar Evento
                     </button>
@@ -104,9 +138,9 @@
 
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1">Código del Boleto</label>
-                            <input type="text" name="codigo" placeholder="Ej. EVT101" required
-                                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none">
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Cantidad (1 a 3)</label>
+                            <input type="number" name="cantidad_comprada" value="1" min="1" max="3" required
+                                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none bg-slate-50 font-semibold">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-slate-500 mb-1">Método de Validación</label>
@@ -116,13 +150,19 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">Nombre del Titula de Compra</label>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Nombre del Titular de Compra</label>
                         <input type="text" name="asistente" placeholder="Nombre Titular" required
                             class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none">
                     </div>
 
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Correo Electrónico (Opcional)</label>
+                        <input type="email" name="correo" placeholder="correo@ejemplo.com"
+                            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm outline-none">
+                    </div>
+
                     <button type="submit" class="mt-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-4 rounded-lg text-sm transition shadow flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-file-pdf"></i> Generar Boleto PDF
+                        <i class="fa-solid fa-file-pdf"></i> Generar Boletos PDF
                     </button>
                 </form>
             </div>
@@ -136,7 +176,7 @@
                     <h2 class="text-lg font-bold text-slate-800">
                         Registro General de Boletos
                     </h2>
-                    <button onclick="cargarBoletos()" class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1">
+                    <button onclick="cargarBoletos();" class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1">
                         <i class="fa-solid fa-rotate"></i> Actualizar
                     </button>
                 </div>
@@ -149,7 +189,8 @@
                                 <th class="p-3">Evento</th>
                                 <th class="p-3">Tipo</th>
                                 <th class="p-3">Área</th>
-                                <th class="p-3 rounded-r-lg">Estado</th>
+                                <th class="p-3">Estado</th>
+                                <th class="p-3 rounded-r-lg text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="tabla_boletos" class="divide-y divide-slate-100">
@@ -162,11 +203,114 @@
 
     </main>
 
-    <!-- Lógica conJavaScript Dinámica -->
+    <!-- Modal de Edición de Boleto -->
+    <div id="modal-editar" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 px-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl relative">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-800">Editar Boleto: <span id="modal-codigo-titulo" class="text-blue-600"></span></h3>
+                <button onclick="cerrarModalEditar()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <form action="/actualizar_boleto" method="POST" class="flex flex-col gap-3">
+                <input type="hidden" name="codigo" id="edit_codigo">
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Nombre del Titular</label>
+                    <input type="text" name="asistente" id="edit_asistente" required
+                        class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Correo Electrónico</label>
+                    <input type="email" name="correo" id="edit_correo" placeholder="correo@ejemplo.com"
+                        class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Seleccionar Evento</label>
+                    <select name="id_evento" id="edit_id_evento" required
+                        class="w-full px-3 py-2 border rounded-lg text-sm outline-none bg-slate-50">
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Tipo de Entrada</label>
+                        <select name="tipo" id="edit_tipo" required
+                            class="w-full px-3 py-2 border rounded-lg text-sm outline-none bg-slate-50">
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Área Autorizada</label>
+                        <select name="area" id="edit_area" required
+                            class="w-full px-3 py-2 border rounded-lg text-sm outline-none bg-slate-50">
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 mt-4">
+                    <button type="button" onclick="cerrarModalEditar()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg text-sm transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg text-sm transition shadow">
+                        Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lógica con JavaScript Dinámica -->
     <script>
         let eventosCache = [];
 
-        // 1. Cargar eventos registrados e inicializar selectores
+        // Función para agregar filas dinámicas de categorías y límites
+        function agregarFilaCategoria() {
+            const contenedor = document.getElementById('contenedor-categorias');
+            const nuevaFila = document.createElement('div');
+            nuevaFila.className = 'flex gap-2 items-center categoria-row';
+            nuevaFila.innerHTML = `
+                <input type="text" placeholder="Nombre categoría" required class="w-7/12 px-3 py-2 border rounded-lg text-sm outline-none cat-nombre">
+                <input type="number" placeholder="Cantidad" value="50" min="1" required class="w-4/12 px-3 py-2 border rounded-lg text-sm outline-none cat-cantidad">
+                <button type="button" onclick="this.parentElement.remove()" class="w-1/12 text-red-500 hover:text-red-700 font-bold transition text-center" title="Eliminar fila">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            `;
+            contenedor.appendChild(nuevaFila);
+        }
+
+        // Interceptar el envío del formulario para validar que la suma de categorías NO sobrepase el límite total
+        document.getElementById('form-crear-evento')?.addEventListener('submit', function(e) {
+            const limiteTotalInput = parseInt(document.getElementById('input_capacidad_total').value) || 0;
+            const filas = document.querySelectorAll('.categoria-row');
+
+            let partesTipos = [];
+            let sumaCategorias = 0;
+
+            filas.forEach(fila => {
+                const nombre = fila.querySelector('.cat-nombre').value.trim();
+                const cantidad = parseInt(fila.querySelector('.cat-cantidad').value) || 0;
+                if (nombre && cantidad > 0) {
+                    partesTipos.push(`${nombre}:${cantidad}`);
+                    sumaCategorias += cantidad;
+                }
+            });
+
+            // Validar que la suma NO sobrepase el límite total del evento
+            if (sumaCategorias > limiteTotalInput) {
+                e.preventDefault(); // Cancela el envío
+                alert(`Error de validación:\nLa suma de los boletos por categoría (${sumaCategorias}) supera el límite total del evento (${limiteTotalInput}). ¡No debe sobrepasarlo!`);
+                return false;
+            }
+
+            // Asignar los valores a los inputs ocultos que procesa Flask
+            document.getElementById('tipos_entrada_oculto').value = partesTipos.join(',');
+            document.getElementById('capacidad_final_oculto').value = limiteTotalInput;
+        });
+
+        // 1. Cargar eventos registrados e inicializar selectores principales
         function cargarEventos() {
             fetch('/api/eventos')
                 .then(res => res.json())
@@ -186,18 +330,17 @@
                         selectEvento.innerHTML += `<option value="${e.id_evento}">${e.nombre_evento}</option>`;
                     });
 
-                    // Cargar dinámicamente las opciones del primer evento obtenido
                     actualizarOpcionesDeEvento(data[0].id_evento);
                 })
                 .catch(err => console.error("Error al cargar eventos:", err));
         }
 
-        // 2. Escuchar cambios de selección en el selector de evento
+        // 2. Escuchar cambios de selección en el selector de evento principal
         document.getElementById('select_evento_compra')?.addEventListener('change', (e) => {
             actualizarOpcionesDeEvento(e.target.value);
         });
 
-        // 3. Actualizar tipos de entrada y áreas autorizadas en función del evento seleccionado
+        // 3. Actualizar tipos de entrada y áreas autorizadas en el formulario principal
         function actualizarOpcionesDeEvento(idEvento) {
             const evento = eventosCache.find(e => e.id_evento == idEvento);
             if (!evento) return;
@@ -205,15 +348,39 @@
             const selectTipo = document.getElementById('select_tipo_compra');
             const selectArea = document.getElementById('select_area_compra');
 
-            // Convertir cadenas separadas por coma en arreglos individuales
-            const tipos = evento.tipos_entrada ? evento.tipos_entrada.split(',') : ['VIP', 'General'];
+            const tiposBrutos = evento.tipos_entrada ? evento.tipos_entrada.split(',') : ['VIP', 'General'];
+            const tiposLimpios = tiposBrutos.map(t => t.split(':')[0].trim());
+
             const areas = evento.areas_acceso ? evento.areas_acceso.split(',') : ['Zona VIP', 'Zona General'];
 
-            selectTipo.innerHTML = tipos.map(t => `<option value="${t.trim()}">${t.trim()}</option>`).join('');
+            selectTipo.innerHTML = tiposLimpios.map(t => `<option value="${t}">${t}</option>`).join('');
             selectArea.innerHTML = areas.map(a => `<option value="${a.trim()}">${a.trim()}</option>`).join('');
         }
 
-        // 4. Cargar tabla de boletos registrados desde la API
+        // 4. Actualizar tipos y áreas en el MODAL DE EDICIÓN al cambiar de evento ahí dentro
+        document.getElementById('edit_id_evento')?.addEventListener('change', (e) => {
+            actualizarOpcionesDeEdicion(e.target.value, null, null);
+        });
+
+        function actualizarOpcionesDeEdicion(idEvento, tipoSeleccionado, areaSeleccionada) {
+            const evento = eventosCache.find(e => e.id_evento == idEvento);
+            if (!evento) return;
+
+            const selectEditTipo = document.getElementById('edit_tipo');
+            const selectEditArea = document.getElementById('edit_area');
+
+            const tiposBrutos = evento.tipos_entrada ? evento.tipos_entrada.split(',') : ['VIP', 'General'];
+            const tiposLimpios = tiposBrutos.map(t => t.split(':')[0].trim());
+            const areas = evento.areas_acceso ? evento.areas_acceso.split(',') : ['Zona VIP', 'Zona General'];
+
+            selectEditTipo.innerHTML = tiposLimpios.map(t => `<option value="${t}" ${t === tipoSeleccionado ? 'selected' : ''}>${t}</option>`).join('');
+            selectEditArea.innerHTML = areas.map(a => {
+                const areaTrim = a.trim();
+                return `<option value="${areaTrim}" ${areaTrim === areaSeleccionada ? 'selected' : ''}>${areaTrim}</option>`;
+            }).join('');
+        }
+
+        // 5. Cargar tabla de boletos registrados desde la API
         function cargarBoletos() {
             fetch('/api/boletos')
                 .then(res => res.json())
@@ -222,7 +389,7 @@
                     tbody.innerHTML = '';
 
                     if (!data || data.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400">No hay boletos registrados.</td></tr>`;
+                        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">No hay boletos registrados.</td></tr>`;
                         return;
                     }
 
@@ -244,11 +411,40 @@
                                         ${estadoTexto}
                                     </span>
                                 </td>
+                                <td class="p-3 text-center">
+                                    <button onclick='abrirModalEditar(${JSON.stringify(b)})' class="text-blue-600 hover:text-blue-800 p-1.5 transition" title="Editar Boleto">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+                                </td>
                             </tr>
                         `;
                     });
                 })
                 .catch(err => console.error("Error al cargar boletos:", err));
+        }
+
+        // Funciones de Control del Modal de Edición
+        function abrirModalEditar(boleto) {
+            document.getElementById('edit_codigo').value = boleto.codigo;
+            document.getElementById('modal-codigo-titulo').innerText = boleto.codigo;
+            document.getElementById('edit_asistente').value = boleto.asistente || '';
+            document.getElementById('edit_correo').value = boleto.correo || '';
+
+            const selectEditEvento = document.getElementById('edit_id_evento');
+            selectEditEvento.innerHTML = '';
+            eventosCache.forEach(e => {
+                const selected = e.id_evento == boleto.id_evento ? 'selected' : '';
+                selectEditEvento.innerHTML += `<option value="${e.id_evento}" ${selected}>${e.nombre_evento}</option>`;
+            });
+
+            // Cargar dinámicamente los selects de tipo y área según el evento actual del boleto
+            actualizarOpcionesDeEdicion(boleto.id_evento, boleto.tipo, boleto.area_acceso);
+
+            document.getElementById('modal-editar').classList.remove('hidden');
+        }
+
+        function cerrarModalEditar() {
+            document.getElementById('modal-editar').classList.add('hidden');
         }
 
         // Ejecutar al cargar la página

@@ -1,14 +1,17 @@
 """
 MÓDULO: Servidor Web Principal (API & Routing)
 DESCRIPCIÓN:
-    Administra rutas web, login, API REST de boletos y eventos.
+    Administra rutas web, login, API REST de boletos y eventos,
+    integrando envío de correos vía SendGrid y control de capacidad máxima.
 """
 
 import os
+import base64
+import requests
 from flask import Flask, render_template, request, send_file, jsonify, redirect, url_for, session
 import base_datos
 import generador_pdf
-from afnd import AFND
+import zipfile
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "eventaccess_secret_key_2026")
@@ -17,6 +20,85 @@ USUARIOS = {
     "control": {"password": "123", "rol": "control", "nombre": "Personal de Control"},
     "admin": {"password": "admin", "rol": "admin", "nombre": "Administrador AFND"}
 }
+
+
+def enviar_boletos_por_correo(destinatario_correo, nombre_asistente, nombre_evento, rutas_pdfs):
+    """Envía todos los boletos generados en un solo correo mediante la API HTTP de SendGrid."""
+    api_key = os.getenv("SENDGRID_API_KEY")
+    remitente = os.getenv("MAIL_USER")
+
+    if not api_key or not remitente:
+        print("[MAIL ERROR]: Falta configurar SENDGRID_API_KEY o MAIL_USER en las variables de entorno.")
+        return False
+
+    try:
+        attachments_list = []
+
+        # Procesar cada PDF y agregarlo a la lista de adjuntos de SendGrid
+        for ruta_pdf in rutas_pdfs:
+            if os.path.exists(ruta_pdf):
+                with open(ruta_pdf, "rb") as archivo:
+                    archivo_pdf = archivo.read()
+                archivo_base64 = base64.b64encode(archivo_pdf).decode("utf-8")
+                nombre_archivo = os.path.basename(ruta_pdf)
+
+                attachments_list.append({
+                    "content": archivo_base64,
+                    "filename": nombre_archivo,
+                    "type": "application/pdf",
+                    "disposition": "attachment"
+                })
+
+        datos = {
+            "personalizations": [
+                {
+                    "to": [{"email": destinatario_correo}],
+                    "subject": f"¡Tus entradas para {nombre_evento} están listas!"
+                }
+            ],
+            "from": {
+                "email": remitente,
+                "name": "EventAccess System"
+            },
+            "content": [
+                {
+                    "type": "text/html",
+                    "value": f"""
+                        <div style="font-family: Arial, sans-serif; color: #333; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            <h2 style="color: #2563eb;">¡Hola {nombre_asistente}!</h2>
+                            <p>Gracias por registrarte en <strong>EventAccess</strong>.</p>
+                            <p>Tus pases digitales para el evento <strong>{nombre_evento}</strong> se han generado con éxito.</p>
+                            <p>Encontrarás tus <strong>{len(rutas_pdfs)} boletos oficiales</strong> adjuntos a este correo en formato PDF.</p>
+                            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+                            <p style="font-size: 12px; color: #64748b;">Sistema automatizado de control de eventos.</p>
+                        </div>
+                    """
+                }
+            ],
+            "attachments": attachments_list
+        }
+
+        respuesta = requests.post(
+            "https://api.sendgrid.com/v3/mail/send",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            },
+            json=datos,
+            timeout=15
+        )
+
+        if respuesta.status_code == 202 or respuesta.ok:
+            print(
+                f"[MAIL SUCCESS]: Correo masivo con {len(rutas_pdfs)} boletos enviado exitosamente a {destinatario_correo} vía SendGrid")
+            return True
+        else:
+            print(f"[MAIL ERROR]: SendGrid respondió con error {respuesta.status_code}: {respuesta.text}")
+            return False
+
+    except Exception as e:
+        print(f"[MAIL ERROR]: No se pudo conectar con SendGrid: {e}")
+        return False
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -77,8 +159,14 @@ def crear_evento():
         tipos_entrada = request.form.get('tipos_entrada', 'VIP,General')
         areas_acceso = request.form.get('areas_acceso', 'Zona VIP,Zona General')
 
+        try:
+            capacidad = int(request.form.get('capacidad', 100))
+        except ValueError:
+            capacidad = 100
+
         if nombre_evento:
-            base_datos.crear_evento(nombre_evento, tipos_entrada, areas_acceso)
+            base_datos.crear_evento(nombre_evento, tipos_entrada, areas_acceso, capacidad)
+
     return redirect(url_for('index'))
 
 
@@ -87,21 +175,81 @@ def generar_boleto():
     if 'usuario' not in session:
         return redirect(url_for('login'))
 
-    codigo = request.form.get('codigo')
-    asistente = request.form.get('asistente')
-    id_evento = request.form.get('id_evento', 1)
+    id_evento_raw = request.form.get('id_evento', '1')
+    try:
+        id_evento = int(''.join(filter(str.isdigit, str(id_evento_raw))))
+        if id_evento == 0:
+            id_evento = 1
+    except ValueError:
+        id_evento = 1
+
     tipo = request.form.get('tipo', 'General')
+
+    try:
+        cantidad = int(request.form.get('cantidad_comprada', 1))
+        if cantidad < 1: cantidad = 1
+        if cantidad > 3: cantidad = 3
+    except ValueError:
+        cantidad = 1
+
+    # 1. Validaciones de capacidad
+    if not base_datos.verificar_capacidad_evento(id_evento, cantidad):
+        return f"Error: No hay suficiente capacidad global en este evento para los {cantidad} boletos solicitados.", 400
+
+    if not base_datos.verificar_capacidad_categoria(id_evento, tipo, cantidad):
+        return f"Error: No hay suficientes cupos disponibles en la categoría '{tipo}' para los {cantidad} boletos solicitados.", 400
+
+    asistente = request.form.get('asistente', 'Invitado')
+    correo_asistente = request.form.get('correo', '')
     metodo = request.form.get('metodo', 'QR')
-    area = request.form.get('area', 'Zona VIP')
+    area = request.form.get('area', 'Zona General')
 
-    base_datos.registrar_o_actualizar_boleto(codigo, asistente, id_evento, tipo, metodo, area)
+    # Obtener nombre real del evento
+    conexion = base_datos.db.conectar()
+    if conexion:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute("SELECT nombre_evento FROM eventos WHERE id_evento = %s", (id_evento,))
+        evento_info = cursor.fetchone()
+        cursor.close()
+        conexion.close()
+        nombre_evento_real = evento_info['nombre_evento'] if evento_info and evento_info.get(
+            'nombre_evento') else "Evento Principal"
+    else:
+        nombre_evento_real = "Evento Principal"
 
-    nombre_pdf = f"Boleto_{codigo}.pdf"
-    generador_pdf.crear_pdf_boleto(codigo, asistente, f"Evento #{id_evento}", tipo, nombre_pdf)
+    rutas_pdfs = []
 
-    return send_file(nombre_pdf, as_attachment=True)
+    # Generar los boletos en un ciclo limpio
+    for i in range(cantidad):
+        codigo = base_datos.obtener_siguiente_codigo()
+        nombre_titular_ticket = asistente
 
+        # Guardar en base de datos (¡Agregamos correo_asistente al final!)
+        base_datos.registrar_o_actualizar_boleto(codigo, nombre_titular_ticket, id_evento, tipo, metodo, area,
+                                                 correo_asistente)
 
+        # Generar PDF individual
+        ruta_pdf = os.path.join('/tmp', f"Boleto_{codigo}.pdf")
+        generador_pdf.crear_pdf_boleto(codigo, nombre_titular_ticket, nombre_evento_real, tipo, ruta_pdf)
+        rutas_pdfs.append(ruta_pdf)
+
+    # 2. ENVIAR UN SOLO CORREO MASIVO con todos los boletos adjuntos (si ingresó correo)
+    if correo_asistente and correo_asistente.strip() != "":
+        try:
+            enviar_boletos_por_correo(correo_asistente, asistente, nombre_evento_real, rutas_pdfs)
+        except Exception as e:
+            print(f"Error al enviar el correo con los boletos: {e}")
+
+    # 3. Descarga web (PDF único si es 1, o archivo ZIP si son varios)
+    if cantidad == 1:
+        return send_file(rutas_pdfs[0], as_attachment=True)
+
+    ruta_zip = os.path.join('/tmp', f"Boletos_{asistente.replace(' ', '_')}.zip")
+    with zipfile.ZipFile(ruta_zip, 'w') as zipf:
+        for archivo_pdf in rutas_pdfs:
+            zipf.write(archivo_pdf, os.path.basename(archivo_pdf))
+
+    return send_file(ruta_zip, as_attachment=True)
 @app.route('/api/eventos')
 def api_eventos():
     eventos = base_datos.obtener_eventos()
@@ -114,6 +262,12 @@ def api_boletos():
     return jsonify(boletos)
 
 
+@app.route('/api/siguiente_codigo')
+def api_siguiente_codigo():
+    codigo = base_datos.obtener_siguiente_codigo()
+    return jsonify({"codigo": codigo})
+
+
 @app.route('/api/validar_qr', methods=['POST'])
 def validar_qr():
     data = request.get_json() or {}
@@ -122,64 +276,23 @@ def validar_qr():
     return jsonify(resultado)
 
 
-@app.route('/api/afnd/procesar', methods=['POST'])
-def afnd_procesar():
-    """
-    Corre la cadena completa a través de un AFND nuevo y devuelve
-    el resultado en el formato que ya espera simulador.html:
-    { aceptada, estados_finales, pasos, mensaje }
-    """
-    data = request.get_json() or {}
-    cadena = data.get('cadena', '')
- 
-    automata = AFND()
-    exito, mensaje, _ = automata.automata_check(cadena)
- 
-    return jsonify({
-        "aceptada": exito,
-        "mensaje": mensaje,
-        "estados_finales": automata.estados_activos(),
-        "pasos": automata.pasos
-    })
- 
- 
-@app.route('/api/afnd/paso', methods=['POST'])
-def afnd_paso():
-    """
-    Avanza UN símbolo. Flask no guarda estado entre peticiones, así que
-    reconstruimos el autómata reproduciendo la cadena desde el inicio
-    hasta 'posicion' (esto es barato: son cadenas de pocos símbolos).
-    """
-    data = request.get_json() or {}
-    cadena = data.get('cadena', '')
-    posicion = int(data.get('posicion', 0))
- 
-    if posicion < 0 or posicion >= len(cadena):
-        return jsonify({"error": "Posición fuera de rango"}), 400
- 
-    automata = AFND()
- 
-    # Reproducimos todo lo anterior al símbolo actual, en silencio
-    for simbolo in cadena[:posicion]:
-        automata.transicion(simbolo)
-    estados_antes = automata.estados_activos()
- 
-    # Aplicamos el símbolo actual, que es el que de verdad nos interesa mostrar
-    simbolo_actual = cadena[posicion]
-    automata.transicion(simbolo_actual)
-    estados_despues = automata.estados_activos()
- 
-    es_ultimo_simbolo = (posicion + 1) >= len(cadena)
-    aceptada = None
-    if es_ultimo_simbolo:
-        aceptada = bool(automata.q6 or automata.q7)
- 
-    return jsonify({
-        "simbolo": simbolo_actual,
-        "estados_siguientes": estados_despues,
-        "transiciones": f"{{{', '.join(estados_antes)}}} --{simbolo_actual}--> {{{', '.join(estados_despues)}}}",
-        "aceptada": aceptada
-    })
+@app.route('/actualizar_boleto', methods=['POST'])
+def actualizar_boleto_web():
+    if 'usuario' not in session or session.get('rol') != 'admin':
+        return jsonify({"exito": False, "mensaje": "Acceso no autorizado"}), 403
+
+    codigo = request.form.get('codigo')
+    asistente = request.form.get('asistente')
+    correo = request.form.get('correo', '')
+    id_evento = request.form.get('id_evento')
+    tipo = request.form.get('tipo')
+    area = request.form.get('area')
+
+    exito = base_datos.actualizar_boleto(codigo, asistente, correo, id_evento, tipo, area)
+
+    if exito:
+        return redirect(url_for('index'))
+    return "Error al actualizar el boleto en la base de datos.", 400
 
 
 if __name__ == '__main__':

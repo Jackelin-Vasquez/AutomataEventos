@@ -1,13 +1,15 @@
-```html
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
 
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
     <title>Simulador AFND - EventAccess</title>
+
 
     <style>
 
@@ -17,577 +19,852 @@
             padding: 0;
         }
 
+
         body {
             font-family: Arial, Helvetica, sans-serif;
-            background: #f4f7fb;
+            background: #f1f5f9;
             color: #263238;
         }
 
-        /* ================================
-           ENCABEZADO
-        ================================= */
 
-        .header {
-            background: linear-gradient(135deg, #173b67, #286090);
-            color: white;
-            padding: 25px 40px;
-            box-shadow: 0 4px 15px rgba(0,0,0,.12);
+        /* ==================================================
+           BARRA SUPERIOR
+           (mismo azul que el panel principal: bg-blue-600)
+        ================================================== */
+
+        .barra-superior {
+            background: #2563eb;
+            color: #ffffff;
+            box-shadow: 0 4px 10px rgba(30, 64, 175, .25);
         }
 
-        .header-content {
-            max-width: 1500px;
+
+        .barra-interna {
+            max-width: 1600px;
             margin: auto;
-        }
-
-        .header h1 {
-            font-size: 29px;
-            margin-bottom: 8px;
-        }
-
-        .header p {
-            font-size: 15px;
-            opacity: .9;
-        }
-
-        /* ================================
-           CONTENEDOR
-        ================================= */
-
-        .container {
-            max-width: 1500px;
-            margin: 25px auto;
-            padding: 0 25px;
-        }
-
-        /* ================================
-           PANEL DE CONTROL
-        ================================= */
-
-        .control-card {
-            background: white;
-            border-radius: 15px;
-            padding: 23px;
-            margin-bottom: 22px;
-            box-shadow: 0 5px 20px rgba(30,50,70,.08);
-        }
-
-        .control-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #173b67;
-            margin-bottom: 18px;
-        }
-
-        .control-row {
-            display: flex;
-            gap: 12px;
-            align-items: end;
-            flex-wrap: wrap;
-        }
-
-        .input-box {
-            flex: 1;
-            min-width: 280px;
-        }
-
-        .input-box label {
-            display: block;
-            font-size: 14px;
-            font-weight: bold;
-            color: #546e7a;
-            margin-bottom: 7px;
-        }
-
-        #cadena {
-            width: 100%;
-            height: 47px;
-            border: 2px solid #d7e0e8;
-            border-radius: 9px;
-            padding: 0 14px;
-            font-size: 17px;
-            outline: none;
-        }
-
-        #cadena:focus {
-            border-color: #2878c8;
-        }
-
-        .buttons {
-            display: flex;
-            gap: 9px;
-            flex-wrap: wrap;
-        }
-
-        button {
-            height: 45px;
-            padding: 0 18px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
-            transition: .2s;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-        }
-
-        .btn-process {
-            background: #2878c8;
-            color: white;
-        }
-
-        .btn-step {
-            background: #e6f0fa;
-            color: #245b91;
-        }
-
-        .btn-reset {
-            background: #edf1f4;
-            color: #455a64;
-        }
-
-        .btn-exit {
-            background: #fdeaea;
-            color: #c62828;
-        }
-
-        /* ================================
-           ALERTA
-        ================================= */
-
-        .alert {
-            display: none;
-            margin-top: 15px;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-
-        .alert.show {
-            display: block;
-        }
-
-        .alert.error {
-            background: #ffebee;
-            color: #c62828;
-        }
-
-        .alert.warning {
-            background: #fff8e1;
-            color: #ef6c00;
-        }
-
-        /* ================================
-           TARJETAS DE ESTADO
-        ================================= */
-
-        .status-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 22px;
-        }
-
-        .status-card {
-            background: white;
-            border-radius: 13px;
-            padding: 18px;
-            box-shadow: 0 4px 15px rgba(30,50,70,.07);
-            border-left: 5px solid #2878c8;
-        }
-
-        .status-card:nth-child(2) {
-            border-left-color: #43a047;
-        }
-
-        .status-card:nth-child(3) {
-            border-left-color: #fb8c00;
-        }
-
-        .status-card:nth-child(4) {
-            border-left-color: #8e24aa;
-        }
-
-        .status-label {
-            font-size: 11px;
-            text-transform: uppercase;
-            color: #78909c;
-            margin-bottom: 7px;
-        }
-
-        .status-value {
-            font-size: 19px;
-            font-weight: bold;
-            color: #263238;
-        }
-
-        /* ================================
-           GRID PRINCIPAL
-        ================================= */
-
-        .main-grid {
-            display: grid;
-            grid-template-columns: 2.1fr 1fr;
-            gap: 22px;
-        }
-
-        .card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(30,50,70,.08);
-            overflow: hidden;
-        }
-
-        .card-header {
-            padding: 18px 22px;
-            border-bottom: 1px solid #e8edf2;
+            padding: 12px 18px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
         }
 
-        .card-header h2 {
-            color: #173b67;
-            font-size: 18px;
+
+        .marca {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: .5px;
         }
 
-        .card-header span {
-            font-size: 12px;
-            color: #78909c;
+
+        .marca .icono {
+            font-size: 22px;
+            color: #fde047;
         }
 
-        /* ================================
-           GRAFO
-        ================================= */
 
-        .graph-container {
-            height: 650px;
-            overflow: auto;
-            background:
-                linear-gradient(#eef3f7 1px, transparent 1px),
-                linear-gradient(90deg, #eef3f7 1px, transparent 1px);
-            background-size: 30px 30px;
+        .barra-acciones {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
-        svg {
+
+        .usuario-chip {
+            background: #1d4ed8;
+            padding: 5px 13px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+
+        .enlace-barra {
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: .2s;
+        }
+
+
+        .enlace-barra:hover {
+            background: #1d4ed8;
+        }
+
+
+        .enlace-salir {
+            background: #ef4444;
+        }
+
+
+        .enlace-salir:hover {
+            background: #dc2626;
+        }
+
+
+        /* ==================================================
+           CONTENEDOR PRINCIPAL
+        ================================================== */
+
+        .contenedor {
             width: 100%;
-            min-width: 1000px;
-            height: 650px;
+            max-width: 1600px;
+            margin: auto;
+            padding: 18px;
         }
 
-        .transition {
-            fill: none;
-            stroke: #8b9aaa;
-            stroke-width: 2.3;
-            marker-end: url(#arrow);
+
+        /* ==================================================
+           GRID PRINCIPAL
+        ================================================== */
+
+        .principal {
+            display: grid;
+            grid-template-columns: 2.25fr 1fr;
+            gap: 16px;
         }
 
-        .transition.active {
-            stroke: #2878c8;
-            stroke-width: 4;
-            marker-end: url(#arrowActive);
+
+        .tarjeta {
+            background: white;
+            border: 1px solid #d9e6f2;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px rgba(35, 75, 110, 0.08);
+            overflow: hidden;
         }
 
-        .transition-label {
-            fill: #455a64;
-            font-size: 14px;
+
+        .titulo-tarjeta {
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 18px;
+            border-bottom: 1px solid #e2ebf3;
+            color: #174a80;
+            font-size: 18px;
             font-weight: bold;
         }
 
-        .transition-label.active {
-            fill: #2878c8;
+
+        .subtitulo {
+            font-size: 12px;
+            color: #78909c;
+            font-weight: normal;
         }
 
-        .state {
-            fill: white;
-            stroke: #55718b;
+
+        /* ==================================================
+           GRAFO
+        ================================================== */
+
+        .zona-grafo {
+            height: 610px;
+            overflow: auto;
+            background:
+                linear-gradient(#edf3f8 1px, transparent 1px),
+                linear-gradient(90deg, #edf3f8 1px, transparent 1px);
+            background-size: 28px 28px;
+        }
+
+
+        svg {
+            width: 100%;
+            min-width: 1050px;
+            height: 610px;
+        }
+
+
+        /* ==================================================
+           TRANSICIONES
+        ================================================== */
+
+        .flecha {
+            fill: none;
+            stroke: #78909c;
+            stroke-width: 2.5;
+            marker-end: url(#flechaNormal);
+        }
+
+
+        .flecha.activa {
+            stroke: #1976d2;
+            stroke-width: 5;
+            marker-end: url(#flechaActiva);
+        }
+
+
+        /* Transiciones de error (símbolo 'e' hacia Q8) */
+
+        .flecha.flecha-error {
+            stroke: #c9a0a0;
+            stroke-width: 1.8;
+            stroke-dasharray: 6 5;
+        }
+
+
+        .flecha.flecha-error.activa {
+            stroke: #e53935;
+            stroke-width: 4.5;
+            stroke-dasharray: none;
+            marker-end: url(#flechaRechazo);
+        }
+
+
+        /* Transición de cierre del programa (Q0 -> Q9) */
+
+        .flecha.flecha-cierre {
+            stroke: #b0bec5;
+            stroke-width: 1.8;
+            stroke-dasharray: 6 5;
+        }
+
+
+        .flecha.flecha-cierre.activa {
+            stroke: #546e7a;
+            stroke-width: 4;
+            stroke-dasharray: none;
+        }
+
+
+        .texto-error {
+            font-size: 13px;
+            font-weight: bold;
+            fill: #c0787c;
+            text-anchor: middle;
+        }
+
+
+        .texto-transicion {
+            font-size: 14px;
+            font-weight: bold;
+            fill: #455a64;
+        }
+
+
+        .texto-transicion.activa {
+            fill: #1976d2;
+        }
+
+
+        /* ==================================================
+           ESTADOS
+        ================================================== */
+
+        .estado {
+            fill: #ffffff;
+            stroke: #527594;
             stroke-width: 3;
-            transition: .3s;
         }
 
-        .state.active {
-            fill: #dff3e4;
+
+        .estado.activo {
+            fill: #e2f4e7;
             stroke: #2e9d55;
             stroke-width: 5;
         }
 
-        .state.current {
-            fill: #fff0d5;
-            stroke: #ef8c22;
+
+        .estado.actual {
+            fill: #fff1d9;
+            stroke: #ef920f;
             stroke-width: 5;
         }
 
-        .state.accept {
-            fill: #e2f5e7;
-            stroke: #1b8c42;
-            stroke-width: 5;
+
+        /* El estado actual siempre debe verse por encima
+           de los estilos de aceptación / rechazo / cierre */
+
+        .estado.actual,
+        .estado.aceptacion.actual,
+        .estado.rechazo.actual,
+        .estado-cierre.actual {
+            fill: #fff1d9;
+            stroke: #ef920f;
+            stroke-width: 6;
         }
 
-        .state.reject {
-            fill: #fde1e1;
-            stroke: #d32f2f;
-            stroke-width: 5;
+
+        .estado.aceptacion {
+            fill: #e3f7e8;
+            stroke: #159447;
+            stroke-width: 4;
         }
 
-        .state-name {
+
+        .estado.rechazo {
+            fill: #ffe5e5;
+            stroke: #d52b2b;
+            stroke-width: 4;
+        }
+
+
+        .estado-cierre {
+            fill: #eee5ff;
+            stroke: #7b3fc6;
+            stroke-width: 4;
+        }
+
+
+        .nombre-estado {
             text-anchor: middle;
             dominant-baseline: middle;
-            font-size: 16px;
+            font-size: 17px;
             font-weight: bold;
             fill: #263238;
         }
 
-        .state-description {
+
+        .descripcion-estado {
             text-anchor: middle;
             font-size: 11px;
             fill: #607d8b;
         }
 
-        /* ================================
+
+        /* ==================================================
            LEYENDA
-        ================================= */
+        ================================================== */
 
-        .legend {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 18px;
-            padding: 15px 22px;
-            border-top: 1px solid #e8edf2;
-            font-size: 13px;
-        }
-
-        .legend-item {
+        .leyenda {
             display: flex;
             align-items: center;
-            gap: 7px;
+            gap: 20px;
+            flex-wrap: wrap;
+            padding: 13px 18px;
+            border-top: 1px solid #e3ebf2;
+            font-size: 12px;
         }
 
-        .legend-circle {
+
+        .leyenda-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+
+        .punto {
             width: 15px;
             height: 15px;
             border-radius: 50%;
-            border: 3px solid #55718b;
+            border: 3px solid #527594;
             background: white;
         }
 
-        .legend-circle.active {
-            background: #dff3e4;
+
+        .punto-activo {
+            background: #e2f4e7;
             border-color: #2e9d55;
         }
 
-        .legend-circle.current {
-            background: #fff0d5;
-            border-color: #ef8c22;
+
+        .punto-actual {
+            background: #fff1d9;
+            border-color: #ef920f;
         }
 
-        .legend-circle.accept {
-            background: #e2f5e7;
-            border-color: #1b8c42;
+
+        .punto-aceptacion {
+            background: #e3f7e8;
+            border-color: #159447;
         }
 
-        .legend-circle.reject {
-            background: #fde1e1;
-            border-color: #d32f2f;
+
+        .punto-rechazo {
+            background: #ffe5e5;
+            border-color: #d52b2b;
         }
 
-        /* ================================
-           PANEL LATERAL
-        ================================= */
 
-        .side-content {
-            padding: 20px;
+        .punto-cierre {
+            background: #eee5ff;
+            border-color: #7b3fc6;
         }
 
-        .info-box {
-            background: #f7f9fc;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
+
+        /* ==================================================
+           CONTROLES
+        ================================================== */
+
+        .contenido {
+            padding: 17px;
         }
 
-        .info-box h3 {
-            color: #173b67;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
 
-        .tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 7px;
-        }
-
-        .tag {
-            padding: 6px 10px;
-            border-radius: 6px;
-            background: #e7f0fa;
-            color: #245b91;
-            font-size: 13px;
-            font-weight: bold;
-        }
-
-        .tag.accept {
-            background: #e4f4e8;
-            color: #23763a;
-        }
-
-        .tag.reject {
-            background: #fdeaea;
-            color: #bd2525;
-        }
-
-        .transition-list {
-            max-height: 220px;
-            overflow-y: auto;
-        }
-
-        .transition-item {
-            padding: 9px;
-            margin-bottom: 6px;
-            background: white;
-            border: 1px solid #e1e8ef;
-            border-radius: 7px;
-            font-size: 13px;
-        }
-
-        .route {
-            padding: 9px;
-            background: white;
-            border-radius: 7px;
-            margin-top: 7px;
-            border: 1px solid #e1e8ef;
-            font-size: 13px;
-            line-height: 1.5;
-        }
-
-        /* ================================
-           RESULTADO
-        ================================= */
-
-        .result-box {
-            display: none;
-            margin: 18px 22px;
-            padding: 18px;
-            border-radius: 10px;
-            text-align: center;
-        }
-
-        .result-box.show {
+        .campo-label {
             display: block;
-        }
-
-        .result-box.accepted {
-            background: #e5f5e9;
-            border: 1px solid #acdcb7;
-            color: #1c7837;
-        }
-
-        .result-box.rejected {
-            background: #fde9e9;
-            border: 1px solid #efb4b4;
-            color: #b71c1c;
-        }
-
-        .result-title {
-            font-size: 21px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .result-description {
             font-size: 14px;
+            font-weight: bold;
+            color: #174a80;
+            margin-bottom: 7px;
         }
 
-        /* ================================
-           HISTORIAL
-        ================================= */
 
-        .history-card {
-            margin-top: 22px;
-        }
-
-        .history {
-            padding: 18px 22px;
-            max-height: 350px;
-            overflow-y: auto;
-        }
-
-        .step {
-            display: grid;
-            grid-template-columns: 65px 80px 1fr 1fr;
-            gap: 12px;
-            padding: 12px;
-            margin-bottom: 8px;
-            background: #fafcfe;
-            border: 1px solid #e2e9ef;
+        #cadena {
+            width: 100%;
+            height: 45px;
+            border: 1.5px solid #bfd1df;
             border-radius: 8px;
-            align-items: center;
+            padding: 0 13px;
+            font-size: 16px;
+            outline: none;
         }
 
-        .step-number {
-            color: #2878c8;
-            font-weight: bold;
+
+        #cadena:focus {
+            border-color: #1976d2;
+            box-shadow: 0 0 0 3px rgba(25,118,210,.08);
         }
 
-        .step-symbol {
-            color: #ef8c22;
-            font-weight: bold;
+
+        #cadena.invalido {
+            border-color: #e53935;
+            box-shadow: 0 0 0 3px rgba(229,57,53,.15);
+            animation: sacudir .3s;
         }
 
-        .step-state {
-            font-size: 13px;
+
+        @keyframes sacudir {
+            0%   { transform: translateX(0); }
+            25%  { transform: translateX(-5px); }
+            50%  { transform: translateX(5px); }
+            75%  { transform: translateX(-4px); }
+            100% { transform: translateX(0); }
         }
 
-        .step-route {
-            font-size: 12px;
+
+        .info-consumo {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 8px;
+            font-size: 12.5px;
             color: #607d8b;
         }
 
-        .empty {
+
+        .info-consumo b {
+            color: #1976d2;
+            font-family: monospace;
+            font-size: 13.5px;
+            letter-spacing: 1px;
+        }
+
+
+        .botones {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+
+        button {
+            border: none;
+            border-radius: 7px;
+            height: 42px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            transition: .2s;
+        }
+
+
+        button:hover {
+            transform: translateY(-1px);
+        }
+
+
+        .procesar {
+            background: #1976d2;
+            color: white;
+        }
+
+
+        .paso {
+            background: #e2f0fc;
+            color: #1764a5;
+        }
+
+
+        .retroceso {
+            background: #f1e7fb;
+            color: #6a3fa0;
+        }
+
+
+        button:disabled {
+            opacity: .45;
+            cursor: not-allowed;
+        }
+
+
+        button:disabled:hover {
+            transform: none;
+        }
+
+
+        .reiniciar {
+            background: #edf1f4;
+            color: #455a64;
+        }
+
+
+        .salir {
+            background: #ffe8e8;
+            color: #c62828;
+        }
+
+
+        /* ==================================================
+           ESTADO ACTUAL
+        ================================================== */
+
+        .estado-panel {
+            margin-top: 16px;
+        }
+
+
+        .datos-estado {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+
+        .dato {
+            background: #f5f8fb;
+            border-radius: 8px;
+            padding: 11px;
+        }
+
+
+        .dato-grande {
+            grid-column: span 2;
+        }
+
+
+        .dato-titulo {
+            font-size: 11px;
+            color: #78909c;
+            margin-bottom: 5px;
+        }
+
+
+        .dato-valor {
+            font-size: 16px;
+            font-weight: bold;
+            color: #174a80;
+        }
+
+
+        .simbolo {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            background: #e3f0fb;
+            color: #1764a5;
+        }
+
+
+        /* ==================================================
+           MENSAJE
+        ================================================== */
+
+        .mensaje {
+            margin-top: 12px;
+            border-radius: 8px;
+            padding: 11px;
+            background: #e8f7ed;
+            border: 1px solid #b9e3c5;
+            color: #23783d;
+            font-size: 12px;
+        }
+
+
+        .mensaje.aviso {
+            background: #fff6e2;
+            border: 1px solid #f0d9a6;
+            color: #8a6212;
+        }
+
+
+        .mensaje.error {
+            background: #ffebeb;
+            border-color: #f1bcbc;
+            color: #bd2525;
+        }
+
+
+        .mensaje.advertencia {
+            background: #fff6df;
+            border-color: #f0d28b;
+            color: #a96700;
+        }
+
+
+        /* ==================================================
+           INFORMACIÓN AFND
+        ================================================== */
+
+        .info-afnd {
+            margin-top: 16px;
+        }
+
+
+        .info-seccion {
+            margin-bottom: 14px;
+        }
+
+
+        .info-seccion h3 {
+            color: #174a80;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+
+        .etiquetas {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+
+        .etiqueta {
+            padding: 6px 10px;
+            border-radius: 6px;
+            background: #e6f1fa;
+            color: #1764a5;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+
+        .etiqueta.aceptacion {
+            background: #ddf3e2;
+            color: #23783d;
+        }
+
+
+        .etiqueta.rechazo {
+            background: #ffe4e4;
+            color: #c62828;
+        }
+
+
+        /* ==================================================
+           PARTE INFERIOR
+        ================================================== */
+
+        .inferior {
+            display: grid;
+            grid-template-columns: 1.5fr .8fr .8fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+
+        .tabla-contenedor {
+            padding: 12px;
+            max-height: 260px;
+            overflow-y: auto;
+        }
+
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+
+        th {
+            background: #edf5fb;
+            color: #174a80;
+            padding: 9px 6px;
+            text-align: left;
+        }
+
+
+        td {
+            padding: 8px 6px;
+            border-bottom: 1px solid #e5edf3;
+        }
+
+
+        tr:hover {
+            background: #f8fbfd;
+        }
+
+
+        /* ==================================================
+           TRANSICIONES
+        ================================================== */
+
+        .lista {
+            padding: 12px;
+            max-height: 260px;
+            overflow-y: auto;
+        }
+
+
+        .transicion-item {
+            padding: 9px;
+            margin-bottom: 7px;
+            border-radius: 7px;
+            background: #f5f9fc;
+            border: 1px solid #e1ebf2;
+            font-size: 12px;
+        }
+
+
+        .transicion-item::before {
+            content: "✓";
+            color: #159447;
+            font-weight: bold;
+            margin-right: 6px;
+        }
+
+
+        /* ==================================================
+           RUTAS
+        ================================================== */
+
+        .ruta {
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            background: #f4f9fd;
+            border: 1px solid #dbe9f3;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+
+        .ruta.aceptada {
+            background: #e8f7ed;
+            border-color: #b9e3c5;
+            color: #23783d;
+        }
+
+
+        .ruta.rechazada {
+            background: #ffebeb;
+            border-color: #f1bcbc;
+            color: #bd2525;
+        }
+
+
+        /* ==================================================
+           RESULTADO
+        ================================================== */
+
+        .resultado {
+            display: none;
+            margin-top: 14px;
+            padding: 15px;
             text-align: center;
-            color: #90a4ae;
-            padding: 25px;
-            font-size: 14px;
+            border-radius: 9px;
         }
 
-        /* ================================
+
+        .resultado.mostrar {
+            display: block;
+        }
+
+
+        .resultado.aceptado {
+            background: #e4f7e9;
+            border: 1px solid #acdcb7;
+            color: #1d7b3a;
+        }
+
+
+        .resultado.rechazado {
+            background: #ffebeb;
+            border: 1px solid #efb9b9;
+            color: #b71c1c;
+        }
+
+
+        .resultado-titulo {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+
+        .resultado-texto {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+
+        /* ==================================================
+           VALIDACIÓN
+        ================================================== */
+
+        .validacion {
+            margin-top: 16px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            background: #fff0f0;
+            border: 1px solid #f0baba;
+            color: #c62828;
+            font-size: 12px;
+        }
+
+
+        .validacion strong {
+            margin-right: 10px;
+        }
+
+
+        /* ==================================================
            RESPONSIVE
-        ================================= */
+        ================================================== */
 
-        @media (max-width: 1100px) {
+        @media(max-width: 1150px) {
 
-            .status-grid {
-                grid-template-columns: repeat(2, 1fr);
+            .principal {
+                grid-template-columns: 1fr;
             }
 
-            .main-grid {
+            .inferior {
                 grid-template-columns: 1fr;
             }
 
         }
 
-        @media (max-width: 700px) {
 
-            .container {
-                padding: 0 12px;
+        @media(max-width: 650px) {
+
+            .contenedor {
+                padding: 8px;
             }
 
-            .status-grid {
+            .botones {
                 grid-template-columns: 1fr;
             }
 
-            .header {
-                padding: 20px;
-            }
-
-            .header h1 {
-                font-size: 23px;
-            }
-
-            .step {
+            .datos-estado {
                 grid-template-columns: 1fr;
+            }
+
+            .dato-grande {
+                grid-column: span 1;
             }
 
         }
@@ -600,727 +877,42 @@
 <body>
 
 
-<!-- =====================================================
-     ENCABEZADO
-====================================================== -->
+<!-- ==================================================
+     BARRA SUPERIOR (igual a la del panel principal)
+================================================== -->
 
-<header class="header">
+<div class="barra-superior">
 
-    <div class="header-content">
+    <div class="barra-interna">
 
-        <h1>
-            Simulador de Autómata Finito No Determinista
-        </h1>
+        <div class="marca">
 
-        <p>
-            EventAccess — Control de acceso a eventos
-        </p>
+            <span class="icono">&#127915;</span>
 
-    </div>
-
-</header>
-
-
-<main class="container">
-
-
-<!-- =====================================================
-     CONTROLES
-====================================================== -->
-
-<section class="control-card">
-
-    <div class="control-title">
-        Evaluación de cadena
-    </div>
-
-    <div class="control-row">
-
-        <div class="input-box">
-
-            <label for="cadena">
-                Cadena de entrada
-            </label>
-
-            <input
-                type="text"
-                id="cadena"
-                placeholder="Ejemplo: qqvva"
-                autocomplete="off"
-            >
+            <span>EventAccess AFND</span>
 
         </div>
 
 
-        <div class="buttons">
+        <div class="barra-acciones">
 
-            <button
-                class="btn-process"
-                onclick="procesarCadena()">
-                Procesar
-            </button>
+            <span class="usuario-chip">
+                {{ session.get('nombre', 'Usuario') }}
+                ({{ session.get('rol', '')|upper }})
+            </span>
 
-            <button
-                class="btn-step"
-                onclick="avanzarPaso()">
-                Avanzar paso a paso
-            </button>
+            <a class="enlace-barra" href="/">
+                Panel principal
+            </a>
 
-            <button
-                class="btn-reset"
-                onclick="reiniciar()">
-                Reiniciar
-            </button>
+            <a class="enlace-barra" href="/simulador">
+                Simulador AFND
+            </a>
 
-            <button
-                class="btn-exit"
-                onclick="salir()">
-                Salir
-            </button>
+            <a class="enlace-barra enlace-salir" href="/logout">
+                Cerrar sesión
+            </a>
 
-        </div>
-
-    </div>
-
-
-    <div id="alerta" class="alert"></div>
-
-</section>
-
-
-<!-- =====================================================
-     ESTADO DEL SIMULADOR
-====================================================== -->
-
-<section class="status-grid">
-
-
-    <div class="status-card">
-
-        <div class="status-label">
-            Símbolo actual
-        </div>
-
-        <div
-            class="status-value"
-            id="simboloActual">
-            —
-        </div>
-
-    </div>
-
-
-    <div class="status-card">
-
-        <div class="status-label">
-            Estados activos
-        </div>
-
-        <div
-            class="status-value"
-            id="estadosActivos">
-            {Q0}
-        </div>
-
-    </div>
-
-
-    <div class="status-card">
-
-        <div class="status-label">
-            Paso actual
-        </div>
-
-        <div
-            class="status-value"
-            id="pasoActual">
-            0
-        </div>
-
-    </div>
-
-
-    <div class="status-card">
-
-        <div class="status-label">
-            Estado del autómata
-        </div>
-
-        <div
-            class="status-value"
-            id="estadoAutomata">
-            Esperando ticket
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- =====================================================
-     GRAFO + INFORMACIÓN
-====================================================== -->
-
-<section class="main-grid">
-
-
-<!-- =====================================================
-     GRAFO
-====================================================== -->
-
-<div class="card">
-
-    <div class="card-header">
-
-        <h2>
-            Grafo del AFND
-        </h2>
-
-        <span>
-            M = (Q, Σ, δ, q0, F)
-        </span>
-
-    </div>
-
-
-    <div class="graph-container">
-
-        <svg
-            viewBox="0 0 1100 650"
-            xmlns="http://www.w3.org/2000/svg">
-
-
-            <defs>
-
-                <marker
-                    id="arrow"
-                    markerWidth="10"
-                    markerHeight="10"
-                    refX="9"
-                    refY="3"
-                    orient="auto">
-
-                    <path
-                        d="M0,0 L0,6 L9,3 z"
-                        fill="#8b9aaa">
-                    </path>
-
-                </marker>
-
-
-                <marker
-                    id="arrowActive"
-                    markerWidth="10"
-                    markerHeight="10"
-                    refX="9"
-                    refY="3"
-                    orient="auto">
-
-                    <path
-                        d="M0,0 L0,6 L9,3 z"
-                        fill="#2878c8">
-                    </path>
-
-                </marker>
-
-            </defs>
-
-
-            <!-- ==========================================
-                 FLECHA INICIAL Q0 -> Q1
-            =========================================== -->
-
-            <line
-                id="t-q0-q1"
-                x1="40"
-                y1="120"
-                x2="115"
-                y2="120"
-                class="transition"
-            />
-
-            <text
-                x="78"
-                y="105"
-                class="transition-label">
-                q / c
-            </text>
-
-
-            <!-- Q0 -->
-
-            <circle
-                id="state-Q0"
-                cx="150"
-                cy="120"
-                r="38"
-                class="state active"
-            />
-
-            <text
-                x="150"
-                y="115"
-                class="state-name">
-                Q0
-            </text>
-
-            <text
-                x="150"
-                y="138"
-                class="state-description">
-                Esperando ticket
-            </text>
-
-
-            <!-- Q1 -->
-
-            <circle
-                id="state-Q1"
-                cx="300"
-                cy="120"
-                r="38"
-                class="state"
-            />
-
-            <text
-                x="300"
-                y="115"
-                class="state-name">
-                Q1
-            </text>
-
-            <text
-                x="300"
-                y="138"
-                class="state-description">
-                Ticket recibido
-            </text>
-
-
-            <!-- Q0 -> Q1 -->
-
-            <line
-                id="t-q1-q2"
-                x1="338"
-                y1="120"
-                x2="445"
-                y2="120"
-                class="transition"
-                marker-end="url(#arrow)"
-            />
-
-            <text
-                x="390"
-                y="105"
-                class="transition-label">
-                q
-            </text>
-
-
-            <!-- Q1 -> Q3 -->
-
-            <path
-                id="t-q1-q3"
-                d="M300 158 C300 230 450 230 470 190"
-                class="transition"
-                marker-end="url(#arrow)"
-            />
-
-            <text
-                x="365"
-                y="215"
-                class="transition-label">
-                c
-            </text>
-
-
-            <!-- Q2 -->
-
-            <circle
-                id="state-Q2"
-                cx="485"
-                cy="120"
-                r="38"
-                class="state"
-            />
-
-            <text
-                x="485"
-                y="115"
-                class="state-name">
-                Q2
-            </text>
-
-            <text
-                x="485"
-                y="138"
-                class="state-description">
-                Esperando QR
-            </text>
-
-
-            <!-- Q3 -->
-
-            <circle
-                id="state-Q3"
-                cx="485"
-                cy="280"
-                r="38"
-                class="state"
-            />
-
-            <text
-                x="485"
-                y="275"
-                class="state-name">
-                Q3
-            </text>
-
-            <text
-                x="485"
-                y="298"
-                class="state-description">
-                Esperando código
-            </text>
-
-
-            <!-- Q2 -> Q4 -->
-
-            <path
-                id="t-q2-q4"
-                d="M523 120 C600 120 600 210 635 235"
-                class="transition"
-                marker-end="url(#arrow)"
-            />
-
-            <text
-                x="580"
-                y="155"
-                class="transition-label">
-                v / g / i
-            </text>
-
-
-            <!-- Q3 -> Q4 -->
-
-            <path
-                id="t-q3-q4"
-                d="M523 280 C580 280 590 255 635 245"
-                class="transition"
-                marker-end="url(#arrow)"
-            />
-
-            <text
-                x="565"
-                y="275"
-                class="transition-label">
-                v / g / i
-            </text>
-
-
-            <!-- Q4 -->
-
-            <circle
-                id="state-Q4"
-                cx="675"
-                cy="240"
-                r="42"
-                class="state"
-            />
-
-            <text
-                x="675"
-                y="235"
-                class="state-name">
-                Q4
-            </text>
-
-            <text
-                x="675"
-                y="258"
-                class="state-description">
-                Tipo de entrada
-            </text>
-
-
-            <!-- Q4 -> Q5 -->
-
-            <line
-                id="t-q4-q5"
-                x1="717"
-                y1="240"
-                x2="795"
-                y2="240"
-                class="transition"
-                marker-end="url(#arrow)"
-            />
-
-            <text
-                x="755"
-                y="225"
-                class="transition-label">
-                v / g / i
-            </text>
-
-
-            <!-- Q5 -->
-
-            <circle
-                id="state-Q5"
-                cx="835"
-                cy="240"
-                r="42"
-                class="state"
-            />
-
-            <text
-                x="835"
-                y="235"
-                class="state-name">
-                Q5
-            </text>
-
-            <text
-                x="835"
-                y="258"
-                class="state-description">
-                Autorización
-            </text>
-
-
-            <!-- Q5 -> Q6 -->
-
-            <path
-                id="t-q5-q6"
-                d="M835 282 C835 370 735 400 665 420"
-                class="transition"
-                marker-end="url(#arrow)"
-            />
-
-            <text
-                x="780"
-                y="370"
-                class="transition-label">
-                a + g
-            </text>
-
-
-            <!-- Q5 -> Q7 -->
-
-            <path
-                id="t-q5-q7"
-                d="M875 270 C945 310 955 380 900 420"
-                class="transition"
-                marker-end="url(#arrow)"
-            />
-
-            <text
-                x="935"
-                y="350"
-                class="transition-label">
-                a + v / i
-            </text>
-
-
-            <!-- Q5 -> Q8 -->
-
-            <path
-                id="t-q5-q8"
-                d="M870 200 C940 150 965 130 930 105"
-                class="transition"
-                marker-end="url(#arrow)"
-            />
-
-            <text
-                x="940"
-                y="145"
-                class="transition-label">
-                e
-            </text>
-
-
-            <!-- Q6 -->
-
-            <circle
-                id="state-Q6"
-                cx="620"
-                cy="455"
-                r="43"
-                class="state accept"
-            />
-
-            <circle
-                cx="620"
-                cy="455"
-                r="34"
-                class="state accept"
-            />
-
-            <text
-                x="620"
-                y="450"
-                class="state-name">
-                Q6
-            </text>
-
-            <text
-                x="620"
-                y="473"
-                class="state-description">
-                GENERAL autorizado
-            </text>
-
-
-            <!-- Q7 -->
-
-            <circle
-                id="state-Q7"
-                cx="900"
-                cy="455"
-                r="43"
-                class="state accept"
-            />
-
-            <circle
-                cx="900"
-                cy="455"
-                r="34"
-                class="state accept"
-            />
-
-            <text
-                x="900"
-                y="450"
-                class="state-name">
-                Q7
-            </text>
-
-            <text
-                x="900"
-                y="473"
-                class="state-description">
-                VIP autorizado
-            </text>
-
-
-            <!-- Q8 -->
-
-            <circle
-                id="state-Q8"
-                cx="950"
-                cy="80"
-                r="43"
-                class="state reject"
-            />
-
-            <text
-                x="950"
-                y="75"
-                class="state-name">
-                Q8
-            </text>
-
-            <text
-                x="950"
-                y="98"
-                class="state-description">
-                Acceso rechazado
-            </text>
-
-
-            <!-- Q9 -->
-
-            <circle
-                id="state-Q9"
-                cx="150"
-                cy="500"
-                r="43"
-                class="state"
-            />
-
-            <text
-                x="150"
-                y="495"
-                class="state-name">
-                Q9
-            </text>
-
-            <text
-                x="150"
-                y="518"
-                class="state-description">
-                Cierre
-            </text>
-
-
-            <!-- e puede producir rechazo -->
-
-            <path
-                id="t-q0-q8"
-                d="M150 158 C100 230 100 390 900 80"
-                class="transition"
-                marker-end="url(#arrow)"
-            />
-
-            <text
-                x="100"
-                y="300"
-                class="transition-label">
-                e
-            </text>
-
-
-        </svg>
-
-    </div>
-
-
-    <!-- LEYENDA -->
-
-    <div class="legend">
-
-        <div class="legend-item">
-            <div class="legend-circle"></div>
-            Estado
-        </div>
-
-        <div class="legend-item">
-            <div class="legend-circle active"></div>
-            Estado activo
-        </div>
-
-        <div class="legend-item">
-            <div class="legend-circle current"></div>
-            Estado actual
-        </div>
-
-        <div class="legend-item">
-            <div class="legend-circle accept"></div>
-            Estado de aceptación
-        </div>
-
-        <div class="legend-item">
-            <div class="legend-circle reject"></div>
-            Estado de rechazo
-        </div>
-
-    </div>
-
-
-    <!-- RESULTADO -->
-
-    <div
-        id="resultado"
-        class="result-box">
-
-        <div
-            id="resultadoTitulo"
-            class="result-title">
-        </div>
-
-        <div
-            id="resultadoDescripcion"
-            class="result-description">
         </div>
 
     </div>
@@ -1328,106 +920,1166 @@
 </div>
 
 
-<!-- =====================================================
-     INFORMACIÓN LATERAL
-====================================================== -->
+<div class="contenedor">
 
-<div class="card">
 
-    <div class="card-header">
+    <!-- ==================================================
+         PARTE PRINCIPAL
+    ================================================== -->
 
-        <h2>
-            Información del AFND
-        </h2>
+    <div class="principal">
 
-        <span>
-            Configuración
-        </span>
+
+        <!-- ==================================================
+             GRAFO
+        ================================================== -->
+
+        <div class="tarjeta">
+
+            <div class="titulo-tarjeta">
+
+                <span>
+                    ⚯ &nbsp; Grafo del AFND
+                </span>
+
+                <span class="subtitulo">
+                    M = (Q, Σ, δ, q0, F)
+                </span>
+
+            </div>
+
+
+            <div class="zona-grafo">
+
+                <svg
+                    viewBox="0 0 1100 610"
+                    xmlns="http://www.w3.org/2000/svg">
+
+
+                    <defs>
+
+                        <marker
+                            id="flechaNormal"
+                            markerWidth="10"
+                            markerHeight="10"
+                            refX="9"
+                            refY="3"
+                            orient="auto">
+
+                            <path
+                                d="M0,0 L0,6 L9,3 Z"
+                                fill="#78909c">
+                            </path>
+
+                        </marker>
+
+
+                        <marker
+                            id="flechaRechazo"
+                            markerWidth="10"
+                            markerHeight="10"
+                            refX="9"
+                            refY="3"
+                            orient="auto">
+
+                            <path
+                                d="M0,0 L0,6 L9,3 Z"
+                                fill="#e53935">
+                            </path>
+
+                        </marker>
+
+
+                        <marker
+                            id="flechaActiva"
+                            markerWidth="10"
+                            markerHeight="10"
+                            refX="9"
+                            refY="3"
+                            orient="auto">
+
+                            <path
+                                d="M0,0 L0,6 L9,3 Z"
+                                fill="#1976d2">
+                            </path>
+
+                        </marker>
+
+                    </defs>
+
+
+                    <!-- =================================================
+                         Q0
+                    ================================================== -->
+
+                    <line
+                        id="t-inicio-Q0"
+                        x1="40"
+                        y1="115"
+                        x2="115"
+                        y2="115"
+                        class="flecha">
+                    </line>
+
+
+                    <text
+                        x="70"
+                        y="98"
+                        class="texto-transicion">
+                        inicio
+                    </text>
+
+
+                    <circle
+                        id="state-Q0"
+                        cx="155"
+                        cy="115"
+                        r="52"
+                        class="estado actual">
+                    </circle>
+
+
+                    <text
+                        x="155"
+                        y="107"
+                        class="nombre-estado">
+                        Q0
+                    </text>
+
+                    <text
+                        x="155"
+                        y="128"
+                        class="descripcion-estado">
+                        Esperando
+                    </text>
+
+                    <text
+                        x="155"
+                        y="142"
+                        class="descripcion-estado">
+                        ticket
+                    </text>
+
+
+                    <!-- =================================================
+                         Q1
+                    ================================================== -->
+
+                    <line
+                        id="t-Q0-Q1"
+                        x1="207"
+                        y1="115"
+                        x2="310"
+                        y2="115"
+                        class="flecha">
+                    </line>
+
+
+                    <text
+                        x="255"
+                        y="98"
+                        class="texto-transicion">
+                        q / c
+                    </text>
+
+
+                    <circle
+                        id="state-Q1"
+                        cx="360"
+                        cy="115"
+                        r="52"
+                        class="estado">
+                    </circle>
+
+
+                    <text
+                        x="360"
+                        y="107"
+                        class="nombre-estado">
+                        Q1
+                    </text>
+
+                    <text
+                        x="360"
+                        y="128"
+                        class="descripcion-estado">
+                        Ticket
+                    </text>
+
+                    <text
+                        x="360"
+                        y="142"
+                        class="descripcion-estado">
+                        recibido
+                    </text>
+
+
+                    <!-- =================================================
+                         Q1 -> Q3
+                    ================================================== -->
+
+                    <path
+                        id="t-Q1-Q3"
+                        d="M360 167 C360 235 440 250 480 275"
+                        class="flecha">
+                    </path>
+
+
+                    <text
+                        x="405"
+                        y="225"
+                        class="texto-transicion">
+                        c
+                    </text>
+
+
+                    <!-- =================================================
+                         Q2
+                    ================================================== -->
+
+                    <line
+                        id="t-Q1-Q2"
+                        x1="412"
+                        y1="115"
+                        x2="515"
+                        y2="115"
+                        class="flecha">
+                    </line>
+
+
+                    <text
+                        x="460"
+                        y="98"
+                        class="texto-transicion">
+                        q
+                    </text>
+
+
+                    <circle
+                        id="state-Q2"
+                        cx="565"
+                        cy="115"
+                        r="52"
+                        class="estado">
+                    </circle>
+
+
+                    <text
+                        x="565"
+                        y="107"
+                        class="nombre-estado">
+                        Q2
+                    </text>
+
+                    <text
+                        x="565"
+                        y="128"
+                        class="descripcion-estado">
+                        Esperando QR /
+                    </text>
+
+                    <text
+                        x="565"
+                        y="142"
+                        class="descripcion-estado">
+                        entrada digital
+                    </text>
+
+
+                    <!-- =================================================
+                         Q3
+                    ================================================== -->
+
+                    <circle
+                        id="state-Q3"
+                        cx="515"
+                        cy="315"
+                        r="52"
+                        class="estado">
+                    </circle>
+
+
+                    <text
+                        x="515"
+                        y="307"
+                        class="nombre-estado">
+                        Q3
+                    </text>
+
+                    <text
+                        x="515"
+                        y="328"
+                        class="descripcion-estado">
+                        Esperando
+                    </text>
+
+                    <text
+                        x="515"
+                        y="342"
+                        class="descripcion-estado">
+                        código
+                    </text>
+
+
+                    <!-- =================================================
+                         Q2 -> Q4
+                    ================================================== -->
+
+                    <path
+                        id="t-Q2-Q4"
+                        d="M617 115 C680 115 680 185 705 215"
+                        class="flecha">
+                    </path>
+
+
+                    <text
+                        x="665"
+                        y="150"
+                        class="texto-transicion">
+                        v / g / i
+                    </text>
+
+
+                    <!-- =================================================
+                         Q3 -> Q4
+                    ================================================== -->
+
+                    <path
+                        id="t-Q3-Q4"
+                        d="M567 315 C625 315 650 255 705 235"
+                        class="flecha">
+                    </path>
+
+
+                    <text
+                        x="610"
+                        y="290"
+                        class="texto-transicion">
+                        v / g / i
+                    </text>
+
+
+                    <!-- =================================================
+                         Q4
+                    ================================================== -->
+
+                    <circle
+                        id="state-Q4"
+                        cx="750"
+                        cy="225"
+                        r="55"
+                        class="estado">
+                    </circle>
+
+
+                    <text
+                        x="750"
+                        y="215"
+                        class="nombre-estado">
+                        Q4
+                    </text>
+
+                    <text
+                        x="750"
+                        y="237"
+                        class="descripcion-estado">
+                        Tipo de
+                    </text>
+
+                    <text
+                        x="750"
+                        y="251"
+                        class="descripcion-estado">
+                        entrada
+                    </text>
+
+
+                    <!-- =================================================
+                         Q4 -> Q5
+                    ================================================== -->
+
+                    <line
+                        id="t-Q4-Q5"
+                        x1="805"
+                        y1="225"
+                        x2="855"
+                        y2="225"
+                        class="flecha">
+                    </line>
+
+
+                    <text
+                        x="830"
+                        y="205"
+                        class="texto-transicion">
+                        v / g / i
+                    </text>
+
+
+                    <!-- =================================================
+                         Q5
+                    ================================================== -->
+
+                    <circle
+                        id="state-Q5"
+                        cx="910"
+                        cy="225"
+                        r="55"
+                        class="estado">
+                    </circle>
+
+
+                    <text
+                        x="910"
+                        y="215"
+                        class="nombre-estado">
+                        Q5
+                    </text>
+
+                    <text
+                        x="910"
+                        y="237"
+                        class="descripcion-estado">
+                        Verificando
+                    </text>
+
+                    <text
+                        x="910"
+                        y="251"
+                        class="descripcion-estado">
+                        autorización
+                    </text>
+
+
+                    <!-- =================================================
+                         Q5 -> Q6
+                    ================================================== -->
+
+                    <path
+                        id="t-Q5-Q6"
+                        d="M875 270 C830 350 745 390 675 420"
+                        class="flecha">
+                    </path>
+
+
+                    <text
+                        x="795"
+                        y="350"
+                        class="texto-transicion">
+                        a + g
+                    </text>
+
+
+                    <!-- =================================================
+                         Q5 -> Q7
+                    ================================================== -->
+
+                    <path
+                        id="t-Q5-Q7"
+                        d="M950 270 C1000 325 1000 370 940 420"
+                        class="flecha">
+                    </path>
+
+
+                    <text
+                        x="970"
+                        y="350"
+                        class="texto-transicion">
+                        a + v / i
+                    </text>
+
+
+                    <!-- =================================================
+                         Q5 -> Q8
+                    ================================================== -->
+
+                    <path
+                        id="t-Q5-Q8"
+                        d="M945 180 C985 145 1000 120 985 90"
+                        class="flecha">
+                    </path>
+
+
+                    <text
+                        x="1000"
+                        y="145"
+                        class="texto-transicion">
+                        e
+                    </text>
+
+
+                    <!-- =================================================
+                         TRANSICIONES DE ERROR:  e -> Q8
+                         (desde Q0, Q1, Q2, Q3 y Q4)
+                    ================================================== -->
+
+                    <path
+                        id="t-Q0-Q8"
+                        d="M155 63 C155 36 168 20 205 20 L980 20"
+                        class="flecha flecha-error">
+                    </path>
+
+                    <text x="250" y="14" class="texto-error">e</text>
+
+
+                    <path
+                        id="t-Q1-Q8"
+                        d="M360 63 C360 44 372 28 410 28 L972 28"
+                        class="flecha flecha-error">
+                    </path>
+
+                    <text x="448" y="22" class="texto-error">e</text>
+
+
+                    <path
+                        id="t-Q2-Q8"
+                        d="M565 63 C565 50 577 36 615 36 L966 36"
+                        class="flecha flecha-error">
+                    </path>
+
+                    <text x="648" y="30" class="texto-error">e</text>
+
+
+                    <path
+                        id="t-Q4-Q8"
+                        d="M750 170 C750 100 762 44 800 44 L962 44"
+                        class="flecha flecha-error">
+                    </path>
+
+                    <text x="838" y="38" class="texto-error">e</text>
+
+
+                    <path
+                        id="t-Q3-Q8"
+                        d="M550 272 C640 250 655 130 672 70 C682 48 705 52 745 52 L959 52"
+                        class="flecha flecha-error">
+                    </path>
+
+                    <text x="790" y="46" class="texto-error">e</text>
+
+
+                    <!-- =================================================
+                         Q6
+                    ================================================== -->
+
+                    <circle
+                        id="state-Q6"
+                        cx="620"
+                        cy="465"
+                        r="52"
+                        class="estado aceptacion">
+                    </circle>
+
+
+                    <circle
+                        cx="620"
+                        cy="465"
+                        r="43"
+                        fill="none"
+                        stroke="#159447"
+                        stroke-width="3">
+                    </circle>
+
+
+                    <text
+                        x="620"
+                        y="457"
+                        class="nombre-estado">
+                        Q6
+                    </text>
+
+                    <text
+                        x="620"
+                        y="478"
+                        class="descripcion-estado">
+                        GENERAL
+                    </text>
+
+                    <text
+                        x="620"
+                        y="492"
+                        class="descripcion-estado">
+                        autorizado
+                    </text>
+
+
+                    <!-- =================================================
+                         Q7
+                    ================================================== -->
+
+                    <circle
+                        id="state-Q7"
+                        cx="920"
+                        cy="465"
+                        r="52"
+                        class="estado aceptacion">
+                    </circle>
+
+
+                    <circle
+                        cx="920"
+                        cy="465"
+                        r="43"
+                        fill="none"
+                        stroke="#159447"
+                        stroke-width="3">
+                    </circle>
+
+
+                    <text
+                        x="920"
+                        y="457"
+                        class="nombre-estado">
+                        Q7
+                    </text>
+
+                    <text
+                        x="920"
+                        y="478"
+                        class="descripcion-estado">
+                        VIP
+                    </text>
+
+                    <text
+                        x="920"
+                        y="492"
+                        class="descripcion-estado">
+                        autorizado
+                    </text>
+
+
+                    <!-- =================================================
+                         Q8
+                    ================================================== -->
+
+                    <circle
+                        id="state-Q8"
+                        cx="1010"
+                        cy="65"
+                        r="52"
+                        class="estado rechazo">
+                    </circle>
+
+
+                    <text
+                        x="1010"
+                        y="57"
+                        class="nombre-estado">
+                        Q8
+                    </text>
+
+                    <text
+                        x="1010"
+                        y="78"
+                        class="descripcion-estado">
+                        Acceso
+                    </text>
+
+                    <text
+                        x="1010"
+                        y="92"
+                        class="descripcion-estado">
+                        rechazado
+                    </text>
+
+
+                    <!-- =================================================
+                         Q9
+                    ================================================== -->
+
+                    <circle
+                        id="state-Q9"
+                        cx="145"
+                        cy="475"
+                        r="52"
+                        class="estado-cierre">
+                    </circle>
+
+
+                    <text
+                        x="145"
+                        y="467"
+                        class="nombre-estado">
+                        Q9
+                    </text>
+
+                    <text
+                        x="145"
+                        y="488"
+                        class="descripcion-estado">
+                        Cierre
+                    </text>
+
+
+                    <!-- Q0 -> Q9 -->
+
+                    <path
+                        id="t-Q0-Q9"
+                        d="M145 167 C80 230 75 395 100 455"
+                        class="flecha flecha-cierre">
+                    </path>
+
+
+                    <text
+                        x="62"
+                        y="315"
+                        class="texto-transicion">
+                        cierre
+                    </text>
+
+
+                </svg>
+
+            </div>
+
+
+            <!-- ==================================================
+                 LEYENDA
+            ================================================== -->
+
+            <div class="leyenda">
+
+                <div class="leyenda-item">
+                    <span class="punto"></span>
+                    Estado normal
+                </div>
+
+                <div class="leyenda-item">
+                    <span class="punto punto-activo"></span>
+                    Estado activo
+                </div>
+
+                <div class="leyenda-item">
+                    <span class="punto punto-actual"></span>
+                    Estado actual
+                </div>
+
+                <div class="leyenda-item">
+                    <span class="punto punto-aceptacion"></span>
+                    Aceptación
+                </div>
+
+                <div class="leyenda-item">
+                    <span class="punto punto-rechazo"></span>
+                    Rechazo
+                </div>
+
+                <div class="leyenda-item">
+                    <span class="punto punto-cierre"></span>
+                    Cierre
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ==================================================
+             PANEL DERECHO
+        ================================================== -->
+
+        <div>
+
+
+            <!-- CONTROLES -->
+
+            <div class="tarjeta">
+
+                <div class="titulo-tarjeta">
+
+                    <span>
+                        ▶ &nbsp; Controles del simulador
+                    </span>
+
+                </div>
+
+
+                <div class="contenido">
+
+                    <label
+                        class="campo-label"
+                        for="cadena">
+
+                        Cadena de entrada
+
+                    </label>
+
+
+                    <input
+                        type="text"
+                        id="cadena"
+                        placeholder="Escriba un símbolo y presione Avanzar paso"
+                        autocomplete="off">
+
+
+                    <div class="info-consumo">
+
+                        <span>
+                            Consumido:
+                            <b id="consumidos">—</b>
+                        </span>
+
+                        <span>
+                            Tipo detectado:
+                            <b id="tipoDetectado">—</b>
+                        </span>
+
+                    </div>
+
+
+                    <div class="botones">
+
+                        <button
+                            class="procesar"
+                            onclick="procesarCadena()">
+
+                            ▶ &nbsp; Procesar
+
+                        </button>
+
+
+                        <button
+                            class="paso"
+                            id="btnAvanzar"
+                            onclick="avanzarPaso()">
+
+                            ⇥ &nbsp; Avanzar paso
+
+                        </button>
+
+
+                        <button
+                            class="retroceso"
+                            id="btnRetroceder"
+                            onclick="retrocederPaso()">
+
+                            ⇤ &nbsp; Retroceder paso
+
+                        </button>
+
+
+                        <button
+                            class="reiniciar"
+                            onclick="reiniciar()">
+
+                            ↻ &nbsp; Reiniciar
+
+                        </button>
+
+
+                        <button
+                            class="salir"
+                            onclick="salir()">
+
+                            ⇥ &nbsp; Salir
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ESTADO ACTUAL -->
+
+            <div class="tarjeta estado-panel">
+
+                <div class="titulo-tarjeta">
+
+                    <span>
+                        ◷ &nbsp; Estado actual
+                    </span>
+
+                </div>
+
+
+                <div class="contenido">
+
+                    <div class="datos-estado">
+
+
+                        <div class="dato">
+
+                            <div class="dato-titulo">
+                                Símbolo actual
+                            </div>
+
+                            <div
+                                id="simboloActual"
+                                class="dato-valor">
+
+                                <span class="simbolo">
+                                    —
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="dato">
+
+                            <div class="dato-titulo">
+                                Paso actual
+                            </div>
+
+                            <div
+                                id="pasoActual"
+                                class="dato-valor">
+
+                                0
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="dato dato-grande">
+
+                            <div class="dato-titulo">
+                                Estados activos
+                            </div>
+
+                            <div
+                                id="estadosActivos"
+                                class="dato-valor">
+
+                                {Q0}
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="dato dato-grande">
+
+                            <div class="dato-titulo">
+                                Estado del autómata
+                            </div>
+
+                            <div
+                                id="estadoAutomata"
+                                class="dato-valor">
+
+                                Esperando ticket
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        id="mensaje"
+                        class="mensaje">
+
+                        Listo para comenzar.
+                        Escriba un símbolo (q, g, v, i, c, a o e)
+                        y el autómata avanzará automáticamente.
+
+                    </div>
+
+
+                    <div
+                        id="resultado"
+                        class="resultado">
+
+                        <div
+                            id="resultadoTitulo"
+                            class="resultado-titulo">
+                        </div>
+
+                        <div
+                            id="resultadoTexto"
+                            class="resultado-texto">
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- INFORMACIÓN DEL AFND -->
+
+            <div class="tarjeta info-afnd">
+
+                <div class="titulo-tarjeta">
+
+                    <span>
+                        ● &nbsp; Información del AFND
+                    </span>
+
+                </div>
+
+
+                <div class="contenido">
+
+
+                    <div class="info-seccion">
+
+                        <h3>
+                            Alfabeto Σ
+                        </h3>
+
+                        <div class="etiquetas">
+
+                            <span class="etiqueta">q</span>
+                            <span class="etiqueta">g</span>
+                            <span class="etiqueta">v</span>
+                            <span class="etiqueta">i</span>
+                            <span class="etiqueta">c</span>
+                            <span class="etiqueta">a</span>
+                            <span class="etiqueta">e</span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="info-seccion">
+
+                        <h3>
+                            Estado inicial
+                        </h3>
+
+                        <div class="etiquetas">
+
+                            <span class="etiqueta">
+                                Q0
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="info-seccion">
+
+                        <h3>
+                            Estados de aceptación
+                        </h3>
+
+                        <div class="etiquetas">
+
+                            <span class="etiqueta aceptacion">
+                                Q6 - General
+                            </span>
+
+                            <span class="etiqueta aceptacion">
+                                Q7 - VIP
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="info-seccion">
+
+                        <h3>
+                            Estado de rechazo
+                        </h3>
+
+                        <div class="etiquetas">
+
+                            <span class="etiqueta rechazo">
+                                Q8
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
 
     </div>
 
 
-    <div class="side-content">
+    <!-- ==================================================
+         PARTE INFERIOR
+    ================================================== -->
+
+    <div class="inferior">
 
 
-        <!-- ALFABETO -->
+        <!-- HISTORIAL -->
 
-        <div class="info-box">
+        <div class="tarjeta">
 
-            <h3>
-                Alfabeto Σ
-            </h3>
+            <div class="titulo-tarjeta">
 
-            <div class="tags">
+                <span>
+                    ▤ &nbsp; Historial de simulación
+                </span>
 
-                <span class="tag">q</span>
-                <span class="tag">g</span>
-                <span class="tag">v</span>
-                <span class="tag">i</span>
-                <span class="tag">c</span>
-                <span class="tag">a</span>
-                <span class="tag">e</span>
-
-            </div>
-
-        </div>
-
-
-        <!-- ESTADO INICIAL -->
-
-        <div class="info-box">
-
-            <h3>
-                Estado inicial
-            </h3>
-
-            <div class="tags">
-
-                <span class="tag">
-                    Q0
+                <span class="subtitulo">
+                    Pasos ejecutados
                 </span>
 
             </div>
 
-        </div>
+
+            <div class="tabla-contenedor">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Paso
+                            </th>
+
+                            <th>
+                                Símbolo
+                            </th>
+
+                            <th>
+                                Estados anteriores
+                            </th>
+
+                            <th>
+                                Estados siguientes
+                            </th>
+
+                            <th>
+                                Transición
+                            </th>
+
+                        </tr>
+
+                    </thead>
 
 
-        <!-- ESTADOS DE ACEPTACIÓN -->
+                    <tbody
+                        id="historial">
 
-        <div class="info-box">
+                        <tr>
 
-            <h3>
-                Estados de aceptación
-            </h3>
+                            <td
+                                colspan="5"
+                                style="text-align:center;color:#90a4ae">
 
-            <div class="tags">
+                                Ingrese una cadena
+                                para comenzar.
 
-                <span class="tag accept">
-                    Q6 - General
-                </span>
+                            </td>
 
-                <span class="tag accept">
-                    Q7 - VIP
-                </span>
+                        </tr>
 
-            </div>
+                    </tbody>
 
-        </div>
-
-
-        <!-- ESTADO DE RECHAZO -->
-
-        <div class="info-box">
-
-            <h3>
-                Estado de rechazo
-            </h3>
-
-            <div class="tags">
-
-                <span class="tag reject">
-                    Q8
-                </span>
+                </table>
 
             </div>
 
@@ -1436,18 +2088,26 @@
 
         <!-- TRANSICIONES -->
 
-        <div class="info-box">
+        <div class="tarjeta">
 
-            <h3>
-                Transiciones realizadas
-            </h3>
+            <div class="titulo-tarjeta">
+
+                <span>
+                    ⇄ &nbsp; Transiciones realizadas
+                </span>
+
+            </div>
+
 
             <div
                 id="listaTransiciones"
-                class="transition-list">
+                class="lista">
 
-                <div class="empty">
+                <div
+                    style="text-align:center;color:#90a4ae;padding:20px">
+
                     No hay transiciones todavía.
+
                 </div>
 
             </div>
@@ -1457,16 +2117,25 @@
 
         <!-- RUTAS -->
 
-        <div class="info-box">
+        <div class="tarjeta">
 
-            <h3>
-                Ruta recorrida
-            </h3>
+            <div class="titulo-tarjeta">
 
-            <div id="rutas">
+                <span>
+                    ⚯ &nbsp; Rutas posibles
+                </span>
 
-                <div class="route">
+            </div>
+
+
+            <div
+                id="rutas"
+                class="lista">
+
+                <div class="ruta">
+
                     Q0
+
                 </div>
 
             </div>
@@ -1475,52 +2144,41 @@
 
     </div>
 
-</div>
 
-</section>
-
-
-<!-- =====================================================
-     HISTORIAL
-====================================================== -->
-
-<section class="card history-card">
-
-    <div class="card-header">
-
-        <h2>
-            Historial de simulación
-        </h2>
-
-        <span>
-            Pasos ejecutados
-        </span>
-
-    </div>
-
+    <!-- ==================================================
+         VALIDACIÓN
+    ================================================== -->
 
     <div
-        id="historial"
-        class="history">
+        id="validacion"
+        class="validacion">
 
-        <div class="empty">
-            Ingrese una cadena para comenzar la simulación.
-        </div>
+        <strong>
+            Validación de entrada:
+        </strong>
+
+        La cadena no puede estar vacía.
+
+        &nbsp;&nbsp;•&nbsp;&nbsp;
+
+        Solo se permiten los símbolos:
+
+        <strong>
+            q, g, v, i, c, a, e
+        </strong>
 
     </div>
 
-</section>
 
-
-</main>
+</div>
 
 
 <script>
 
 
-/* =========================================================
+/* ========================================================
    CONFIGURACIÓN DEL AFND
-========================================================= */
+======================================================== */
 
 
 const ALFABETO = [
@@ -1532,22 +2190,6 @@ const ALFABETO = [
     "a",
     "e"
 ];
-
-
-let cadena = "";
-
-let posicion = 0;
-
-let estadosActivos = ["Q0"];
-
-let historial = [];
-
-let tipoDetectado = null;
-
-
-/* =========================================================
-   TABLA DE TRANSICIONES
-========================================================= */
 
 
 const TRANSICIONES = {
@@ -1601,63 +2243,100 @@ const TRANSICIONES = {
 };
 
 
-/* =========================================================
-   MOSTRAR ALERTA
-========================================================= */
+const DESCRIPCIONES = {
+
+    Q0: "Esperando ticket",
+
+    Q1: "Ticket recibido",
+
+    Q2: "Esperando QR / entrada digital",
+
+    Q3: "Esperando código / entrada manual",
+
+    Q4: "Tipo de entrada",
+
+    Q5: "Verificando autorización",
+
+    Q6: "GENERAL autorizado",
+
+    Q7: "VIP autorizado",
+
+    Q8: "Acceso rechazado",
+
+    Q9: "Cierre"
+
+};
 
 
-function mostrarAlerta(mensaje, tipo = "error") {
-
-    const alerta =
-        document.getElementById("alerta");
-
-    alerta.textContent = mensaje;
-
-    alerta.className =
-        "alert show " + tipo;
-
-}
+const ESTADOS_ACEPTACION = [
+    "Q6",
+    "Q7"
+];
 
 
-function ocultarAlerta() {
+/*
+   MODELO DE ENTRADA "SÍMBOLO A SÍMBOLO"
 
-    const alerta =
-        document.getElementById("alerta");
+   Ya no se escribe la cadena completa de una vez.
+   Cada símbolo que el usuario escribe se procesa al
+   instante: el autómata avanza, el campo se limpia
+   solo, y "cadena" va guardando (acumulando) todo lo
+   ya consumido para mostrarlo y para poder retroceder.
+*/
 
-    alerta.className = "alert";
+let cadena = "";
 
-    alerta.textContent = "";
+let estadosActivos = ["Q0"];
 
-}
+let historial = [];
+
+/*
+   Tipo de entrada detectado al pasar a Q4:
+   "g" = general  ->  Q5 resuelve hacia Q6
+   "v" / "i" = VIP / invitación  ->  Q5 resuelve hacia Q7
+*/
+let tipoDetectado = null;
+
+/* true cuando el recorrido ya llegó a un estado final
+   (Q6, Q7, Q8 o sin transición posible). Mientras esté
+   en true no se aceptan más símbolos hasta Retroceder
+   o Reiniciar. */
+let terminado = false;
 
 
-/* =========================================================
+/* ========================================================
    VALIDAR CADENA
-========================================================= */
+======================================================== */
 
 
-function validarCadena(valor) {
+function validarEntrada(valor) {
 
-    if (valor === "") {
+    const texto = document.getElementById("validacion");
 
-        mostrarAlerta(
-            "Debe ingresar una cadena."
-        );
+    if (valor.length === 0) {
+
+        texto.innerHTML =
+            "<strong>Validación de entrada:</strong> " +
+            "La cadena no puede estar vacía.";
 
         return false;
 
     }
 
 
-    for (let i = 0; i < valor.length; i++) {
+    for (
+        let i = 0;
+        i < valor.length;
+        i++
+    ) {
 
         if (!ALFABETO.includes(valor[i])) {
 
-            mostrarAlerta(
-                "El símbolo '" +
+            texto.innerHTML =
+                "<strong>Validación de entrada:</strong> " +
+                "El símbolo <b>" +
                 valor[i] +
-                "' no pertenece al alfabeto."
-            );
+                "</b> no pertenece al alfabeto.";
 
             return false;
 
@@ -1665,40 +2344,93 @@ function validarCadena(valor) {
 
     }
 
+
+    texto.innerHTML =
+        "<strong>Validación de entrada:</strong> " +
+        "La cadena es válida. " +
+        "Símbolos permitidos: q, g, v, i, c, a, e.";
+
     return true;
 
 }
 
 
-/* =========================================================
-   CALCULAR SIGUIENTES ESTADOS
-========================================================= */
+/* ========================================================
+   SIGUIENTES ESTADOS
+======================================================== */
 
 
-function obtenerSiguientesEstados(
-    estados,
-    simbolo
-) {
+function destinosDe(estado, simbolo) {
+
+    if (
+        !TRANSICIONES[estado] ||
+        !TRANSICIONES[estado][simbolo]
+    ) {
+
+        return [];
+
+    }
+
+
+    let destinos =
+        TRANSICIONES[estado][simbolo];
+
+
+    /* ==============================================
+       RESOLUCIÓN DEL NO DETERMINISMO EN Q5
+
+       Desde Q5 con el símbolo 'a' existen dos
+       destinos posibles (Q6 y Q7). El destino real
+       depende del tipo de entrada detectado en Q4:
+
+          g        ->  Q6  (GENERAL autorizado)
+          v  ó  i  ->  Q7  (VIP autorizado)
+    ============================================== */
+
+    if (
+        estado === "Q5" &&
+        simbolo === "a"
+    ) {
+
+        if (tipoDetectado === "g") {
+
+            return ["Q6"];
+
+        }
+
+
+        if (
+            tipoDetectado === "v" ||
+            tipoDetectado === "i"
+        ) {
+
+            return ["Q7"];
+
+        }
+
+    }
+
+
+    return destinos;
+
+}
+
+
+function obtenerSiguientes(estados, simbolo) {
 
     let siguientes = [];
 
+
     for (const estado of estados) {
 
-        if (
-            TRANSICIONES[estado] &&
-            TRANSICIONES[estado][simbolo]
+        for (
+            const destino
+            of destinosDe(estado, simbolo)
         ) {
 
-            for (
-                const destino
-                of TRANSICIONES[estado][simbolo]
-            ) {
+            if (!siguientes.includes(destino)) {
 
-                if (!siguientes.includes(destino)) {
-
-                    siguientes.push(destino);
-
-                }
+                siguientes.push(destino);
 
             }
 
@@ -1706,59 +2438,18 @@ function obtenerSiguientesEstados(
 
     }
 
+
     return siguientes;
 
 }
 
 
-/* =========================================================
-   DESCRIPCIÓN DEL ESTADO
-========================================================= */
-
-
-function descripcionEstado(estado) {
-
-    const descripciones = {
-
-        Q0: "Esperando ticket",
-
-        Q1: "Ticket recibido",
-
-        Q2: "Esperando QR / entrada digital",
-
-        Q3: "Esperando código / entrada manual",
-
-        Q4: "Verificando tipo de entrada",
-
-        Q5: "Verificando autorización",
-
-        Q6: "Acceso GENERAL autorizado",
-
-        Q7: "Acceso VIP autorizado",
-
-        Q8: "Acceso rechazado",
-
-        Q9: "Cierre del programa"
-
-    };
-
-    return descripciones[estado] || estado;
-
-}
-
-
-/* =========================================================
-   ACTUALIZAR ESTADOS
-========================================================= */
+/* ========================================================
+   ACTUALIZAR ESTADOS VISUALES
+======================================================== */
 
 
 function actualizarEstados() {
-
-    document.getElementById(
-        "estadosActivos"
-    ).textContent =
-        "{" + estadosActivos.join(", ") + "}";
-
 
     const estados = [
         "Q0",
@@ -1774,296 +2465,157 @@ function actualizarEstados() {
     ];
 
 
-    estados.forEach(function(estado) {
+    for (const estado of estados) {
 
         const elemento =
             document.getElementById(
                 "state-" + estado
             );
+
 
         if (!elemento) {
-            return;
-        }
-
-        elemento.classList.remove(
-            "active",
-            "current",
-            "reject"
-        );
-
-
-        if (estadosActivos.includes(estado)) {
-
-            elemento.classList.add("active");
-
-        }
-
-    });
-
-
-    estadosActivos.forEach(function(estado) {
-
-        const elemento =
-            document.getElementById(
-                "state-" + estado
-            );
-
-        if (elemento) {
-
-            elemento.classList.add("current");
-
-        }
-
-    });
-
-}
-
-
-/* =========================================================
-   LIMPIAR TRANSICIONES
-========================================================= */
-
-
-function limpiarTransiciones() {
-
-    const ids = [
-
-        "t-q0-q1",
-        "t-q1-q2",
-        "t-q1-q3",
-        "t-q2-q4",
-        "t-q3-q4",
-        "t-q4-q5",
-        "t-q5-q6",
-        "t-q5-q7",
-        "t-q5-q8",
-        "t-q0-q8"
-
-    ];
-
-
-    ids.forEach(function(id) {
-
-        const elemento =
-            document.getElementById(id);
-
-        if (elemento) {
-
-            elemento.classList.remove("active");
-
-        }
-
-    });
-
-}
-
-
-/* =========================================================
-   RESALTAR TRANSICIÓN
-========================================================= */
-
-
-function resaltarTransicion(
-    anteriores,
-    simbolo,
-    siguientes
-) {
-
-    limpiarTransiciones();
-
-
-    for (const origen of anteriores) {
-
-        const destinos =
-            TRANSICIONES[origen] &&
-            TRANSICIONES[origen][simbolo];
-
-
-        if (!destinos) {
             continue;
         }
 
 
-        for (const destino of destinos) {
-
-            let id = null;
-
-
-            if (
-                origen === "Q0" &&
-                destino === "Q1"
-            ) {
-
-                id = "t-q0-q1";
-
-            }
-
-            else if (
-                origen === "Q1" &&
-                destino === "Q2"
-            ) {
-
-                id = "t-q1-q2";
-
-            }
-
-            else if (
-                origen === "Q1" &&
-                destino === "Q3"
-            ) {
-
-                id = "t-q1-q3";
-
-            }
-
-            else if (
-                origen === "Q2" &&
-                destino === "Q4"
-            ) {
-
-                id = "t-q2-q4";
-
-            }
-
-            else if (
-                origen === "Q3" &&
-                destino === "Q4"
-            ) {
-
-                id = "t-q3-q4";
-
-            }
-
-            else if (
-                origen === "Q4" &&
-                destino === "Q5"
-            ) {
-
-                id = "t-q4-q5";
-
-            }
-
-            else if (
-                origen === "Q5" &&
-                destino === "Q6"
-            ) {
-
-                id = "t-q5-q6";
-
-            }
-
-            else if (
-                origen === "Q5" &&
-                destino === "Q7"
-            ) {
-
-                id = "t-q5-q7";
-
-            }
-
-            else if (
-                origen === "Q5" &&
-                destino === "Q8"
-            ) {
-
-                id = "t-q5-q8";
-
-            }
+        elemento.classList.remove(
+            "activo",
+            "actual",
+            "rechazo"
+        );
 
 
-            if (id) {
+        if (
+            estadosActivos.includes(estado)
+        ) {
 
-                const elemento =
-                    document.getElementById(id);
-
-                if (elemento) {
-                    elemento.classList.add("active");
-                }
-
-            }
+            elemento.classList.add("activo");
 
         }
 
     }
 
-}
+
+    for (
+        const estado
+        of estadosActivos
+    ) {
+
+        const elemento =
+            document.getElementById(
+                "state-" + estado
+            );
 
 
-/* =========================================================
-   AGREGAR HISTORIAL
-========================================================= */
+        if (elemento) {
 
+            elemento.classList.add("actual");
 
-function agregarHistorial(
-    numero,
-    simbolo,
-    anteriores,
-    siguientes
-) {
-
-    const contenedor =
-        document.getElementById(
-            "historial"
-        );
-
-
-    if (historial.length === 0) {
-
-        contenedor.innerHTML = "";
+        }
 
     }
 
 
-    const div =
-        document.createElement("div");
-
-    div.className = "step";
-
-
-    let transicion =
-        anteriores.join(", ") +
-        " -- " +
-        simbolo +
-        " --> " +
-        siguientes.join(", ");
+    document.getElementById(
+        "estadosActivos"
+    ).textContent =
+        "{" +
+        estadosActivos.join(", ") +
+        "}";
 
 
-    div.innerHTML = `
+    if (
+        estadosActivos.length > 0
+    ) {
 
-        <div class="step-number">
-            Paso ${numero}
-        </div>
+        document.getElementById(
+            "estadoAutomata"
+        ).textContent =
+            DESCRIPCIONES[
+                estadosActivos[0]
+            ];
 
-        <div class="step-symbol">
-            ${simbolo}
-        </div>
-
-        <div class="step-state">
-            ${anteriores.join(", ")}
-            →
-            ${siguientes.join(", ")}
-        </div>
-
-        <div class="step-route">
-            ${transicion}
-        </div>
-
-    `;
-
-
-    contenedor.appendChild(div);
+    }
 
 }
 
 
-/* =========================================================
-   AGREGAR TRANSICIÓN
-========================================================= */
+/* ========================================================
+   LIMPIAR FLECHAS
+======================================================== */
 
 
-function agregarTransicion(
-    texto
+function limpiarFlechas() {
+
+    const flechas = document.querySelectorAll(
+        ".flecha"
+    );
+
+
+    flechas.forEach(
+        function(flecha) {
+
+            flecha.classList.remove(
+                "activa"
+            );
+
+        }
+    );
+
+}
+
+
+/* ========================================================
+   ACTIVAR FLECHA
+======================================================== */
+
+
+function activarFlecha(
+    origen,
+    destino
 ) {
+
+    const id =
+        "t-" +
+        origen +
+        "-" +
+        destino;
+
+
+    const flecha =
+        document.getElementById(id);
+
+
+    if (flecha) {
+
+        flecha.classList.add(
+            "activa"
+        );
+
+    }
+
+}
+
+
+/* ========================================================
+   REGISTRAR TRANSICIONES
+======================================================== */
+
+
+function renderPasos() {
+
+    /*
+       Reconstruye por completo la tabla de historial
+       y la lista de transiciones a partir del arreglo
+       "historial". De esta forma, tanto avanzar como
+       retroceder muestran siempre un estado coherente.
+    */
+
+    const tabla =
+        document.getElementById(
+            "historial"
+        );
+
 
     const lista =
         document.getElementById(
@@ -2071,43 +2623,201 @@ function agregarTransicion(
         );
 
 
-    if (historial.length === 1) {
+    if (historial.length === 0) {
 
-        lista.innerHTML = "";
+        tabla.innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="5"
+                    style="text-align:center;color:#90a4ae">
+
+                    Ingrese una cadena
+                    para comenzar.
+
+                </td>
+
+            </tr>
+
+        `;
+
+
+        lista.innerHTML = `
+
+            <div
+                style="text-align:center;color:#90a4ae;padding:20px">
+
+                No hay transiciones todavía.
+
+            </div>
+
+        `;
+
+
+        return;
 
     }
 
 
-    const div =
-        document.createElement("div");
+    tabla.innerHTML = "";
 
-    div.className =
-        "transition-item";
+    lista.innerHTML = "";
 
-    div.textContent = texto;
 
-    lista.appendChild(div);
+    for (const paso of historial) {
+
+        const fila =
+            document.createElement("tr");
+
+
+        fila.innerHTML = `
+
+            <td>${paso.numero}</td>
+
+            <td>
+                <strong>${paso.simbolo}</strong>
+            </td>
+
+            <td>
+                {${paso.anteriores.join(", ")}}
+            </td>
+
+            <td>
+                {${
+                    paso.siguientes.length
+                    ? paso.siguientes.join(", ")
+                    : "∅"
+                }}
+            </td>
+
+            <td>
+                ${paso.anteriores.join(", ")}
+                →
+                ${
+                    paso.siguientes.length
+                    ? paso.siguientes.join(", ")
+                    : "∅"
+                }
+            </td>
+
+        `;
+
+
+        tabla.appendChild(fila);
+
+
+        const elemento =
+            document.createElement("div");
+
+
+        elemento.className =
+            "transicion-item";
+
+
+        elemento.textContent =
+            paso.anteriores.join(", ") +
+            "  --" +
+            paso.simbolo +
+            "-->  " +
+            (
+                paso.siguientes.length
+                    ? paso.siguientes.join(", ")
+                    : "sin transición"
+            );
+
+
+        lista.appendChild(elemento);
+
+    }
 
 }
 
 
-/* =========================================================
-   ACTUALIZAR RUTA
-========================================================= */
+/* ========================================================
+   DIBUJAR LAS FLECHAS DEL ÚLTIMO PASO
+======================================================== */
 
 
-function actualizarRuta() {
+function dibujarFlechasDelPaso() {
 
-    const rutas =
+    limpiarFlechas();
+
+
+    if (historial.length === 0) {
+
+        return;
+
+    }
+
+
+    const ultimo =
+        historial[historial.length - 1];
+
+
+    for (const par of ultimo.flechas) {
+
+        activarFlecha(par[0], par[1]);
+
+    }
+
+}
+
+
+/* ========================================================
+   HABILITAR / DESHABILITAR BOTONES
+======================================================== */
+
+
+function actualizarBotones() {
+
+    const btnAtras =
+        document.getElementById("btnRetroceder");
+
+
+    const btnPaso =
+        document.getElementById("btnAvanzar");
+
+
+    if (btnAtras) {
+
+        btnAtras.disabled =
+            historial.length === 0;
+
+    }
+
+
+    if (btnPaso) {
+
+        btnPaso.disabled =
+            terminado;
+
+    }
+
+}
+
+
+/* ========================================================
+   ACTUALIZAR RUTAS
+======================================================== */
+
+
+function actualizarRutas() {
+
+    const contenedor =
         document.getElementById(
             "rutas"
         );
 
 
-    let ruta = "Q0";
+    let ruta =
+        "Q0";
 
 
-    historial.forEach(function(paso) {
+    for (
+        const paso
+        of historial
+    ) {
 
         if (
             paso.siguientes.length > 0
@@ -2119,293 +2829,92 @@ function actualizarRuta() {
 
         }
 
-    });
+    }
 
 
-    rutas.innerHTML = `
-
-        <div class="route">
-            ${ruta}
-        </div>
-
-    `;
-
-}
+    contenedor.innerHTML = "";
 
 
-/* =========================================================
-   AVANZAR UN PASO
-========================================================= */
+    const elemento =
+        document.createElement("div");
 
 
-function avanzarPaso() {
+    elemento.className =
+        "ruta";
 
-    ocultarAlerta();
+
+    elemento.textContent =
+        ruta;
 
 
-    const campo =
-        document.getElementById(
-            "cadena"
+    contenedor.appendChild(elemento);
+
+
+    /*
+       Mostrar las dos rutas de aceptación
+       cuando el AFND llega a Q6 y Q7.
+    */
+
+
+    if (
+        estadosActivos.includes("Q6")
+    ) {
+
+        const aceptada =
+            document.createElement("div");
+
+
+        aceptada.className =
+            "ruta aceptada";
+
+
+        aceptada.textContent =
+            ruta +
+            " → Q6  (ACEPTACIÓN)";
+
+
+        contenedor.appendChild(
+            aceptada
         );
-
-
-    if (cadena === "") {
-
-        cadena =
-            campo.value
-            .trim()
-            .toLowerCase();
-
-
-        if (!validarCadena(cadena)) {
-
-            cadena = "";
-
-            return;
-
-        }
 
     }
 
 
-    if (posicion >= cadena.length) {
+    if (
+        estadosActivos.includes("Q7")
+    ) {
 
-        mostrarAlerta(
-            "La cadena ya fue procesada.",
-            "warning"
+        const aceptada =
+            document.createElement("div");
+
+
+        aceptada.className =
+            "ruta aceptada";
+
+
+        aceptada.textContent =
+            ruta +
+            " → Q7  (ACEPTACIÓN)";
+
+
+        contenedor.appendChild(
+            aceptada
         );
-
-        return;
-
-    }
-
-
-    const simbolo =
-        cadena[posicion];
-
-
-    document.getElementById(
-        "simboloActual"
-    ).textContent =
-        simbolo;
-
-
-    const anteriores =
-        [...estadosActivos];
-
-
-    const siguientes =
-        obtenerSiguientesEstados(
-            estadosActivos,
-            simbolo
-        );
-
-
-    historial.push({
-
-        numero: posicion + 1,
-
-        simbolo: simbolo,
-
-        anteriores: anteriores,
-
-        siguientes: siguientes
-
-    });
-
-
-    agregarHistorial(
-        posicion + 1,
-        simbolo,
-        anteriores,
-        siguientes
-    );
-
-
-    agregarTransicion(
-
-        anteriores.join(", ") +
-        " --" +
-        simbolo +
-        "--> " +
-        (
-            siguientes.length > 0
-                ? siguientes.join(", ")
-                : "sin transición"
-        )
-
-    );
-
-
-    estadosActivos =
-        siguientes;
-
-
-    posicion++;
-
-
-    document.getElementById(
-        "pasoActual"
-    ).textContent =
-        posicion;
-
-
-    actualizarEstados();
-
-
-    resaltarTransicion(
-        anteriores,
-        simbolo,
-        siguientes
-    );
-
-
-    actualizarRuta();
-
-
-    if (siguientes.length === 0) {
-
-        mostrarResultado(
-            false,
-            "CADENA RECHAZADA",
-            "No existe una transición válida para continuar desde los estados actuales."
-        );
-
-        return;
-
-    }
-
-
-    if (siguientes.includes("Q8")) {
-
-        mostrarResultado(
-            false,
-            "ACCESO RECHAZADO",
-            "El autómata llegó al estado Q8."
-        );
-
-        return;
-
-    }
-
-
-    if (posicion === cadena.length) {
-
-        if (
-            siguientes.includes("Q6") ||
-            siguientes.includes("Q7")
-        ) {
-
-            mostrarResultado(
-                true,
-                "CADENA ACEPTADA",
-                "La cadena alcanzó un estado de aceptación."
-            );
-
-        }
-
-        else {
-
-            mostrarResultado(
-                false,
-                "CADENA RECHAZADA",
-                "La cadena terminó sin alcanzar Q6 ni Q7."
-            );
-
-        }
-
-    }
-
-    else {
-
-        document.getElementById(
-            "estadoAutomata"
-        ).textContent =
-            descripcionEstado(
-                siguientes[0]
-            );
 
     }
 
 }
 
 
-/* =========================================================
-   PROCESAR CADENA COMPLETA
-========================================================= */
-
-
-function procesarCadena() {
-
-    ocultarAlerta();
-
-
-    const campo =
-        document.getElementById(
-            "cadena"
-        );
-
-
-    const valor =
-        campo.value
-        .trim()
-        .toLowerCase();
-
-
-    if (!validarCadena(valor)) {
-
-        return;
-
-    }
-
-
-    reiniciar(false);
-
-
-    cadena = valor;
-
-
-    let contador = 0;
-
-
-    function ejecutarPaso() {
-
-        if (
-            contador >= cadena.length
-        ) {
-
-            return;
-
-        }
-
-
-        avanzarPaso();
-
-        contador++;
-
-
-        setTimeout(
-            ejecutarPaso,
-            450
-        );
-
-    }
-
-
-    ejecutarPaso();
-
-}
-
-
-/* =========================================================
+/* ========================================================
    MOSTRAR RESULTADO
-========================================================= */
+======================================================== */
 
 
 function mostrarResultado(
     aceptada,
     titulo,
-    descripcion
+    texto
 ) {
 
     const resultado =
@@ -2415,11 +2924,11 @@ function mostrarResultado(
 
 
     resultado.className =
-        "result-box show " +
+        "resultado mostrar " +
         (
             aceptada
-                ? "accepted"
-                : "rejected"
+                ? "aceptado"
+                : "rechazado"
         );
 
 
@@ -2430,70 +2939,792 @@ function mostrarResultado(
 
 
     document.getElementById(
-        "resultadoDescripcion"
+        "resultadoTexto"
     ).textContent =
-        descripcion;
+        texto;
+
+}
+
+
+/* ========================================================
+   FILTRAR UN VALOR CRUDO DEL CAMPO
+
+   Separa los símbolos válidos (del alfabeto) de los
+   inválidos, sin tocar el campo de entrada.
+======================================================== */
+
+
+function filtrarCadena(valorCrudo) {
+
+    const original =
+        valorCrudo.toLowerCase();
+
+
+    let limpio = "";
+
+    let rechazados = [];
+
+
+    for (
+        let i = 0;
+        i < original.length;
+        i++
+    ) {
+
+        if (
+            ALFABETO.includes(original[i])
+        ) {
+
+            limpio += original[i];
+
+        }
+
+        else if (
+            !rechazados.includes(original[i])
+        ) {
+
+            rechazados.push(original[i]);
+
+        }
+
+    }
+
+
+    return {
+        limpio: limpio,
+        rechazados: rechazados
+    };
+
+}
+
+
+/* ========================================================
+   AVISO: EL RECORRIDO YA TERMINÓ
+======================================================== */
+
+
+function mostrarAvisoTerminado() {
+
+    document.getElementById(
+        "mensaje"
+    ).className =
+        "mensaje aviso";
 
 
     document.getElementById(
-        "estadoAutomata"
+        "mensaje"
     ).textContent =
-        aceptada
-            ? "Aceptada"
-            : "Rechazada";
+        "El recorrido ya llegó a un estado final. " +
+        "Use Retroceder o Reiniciar para continuar.";
+
+}
 
 
-    estadosActivos.forEach(
-        function(estado) {
+/* ========================================================
+   CONSUMIR UN ÚNICO SÍMBOLO
 
-            const elemento =
-                document.getElementById(
-                    "state-" + estado
-                );
-
-
-            if (!elemento) {
-                return;
-            }
+   Es el corazón del simulador: procesa un solo símbolo
+   ya validado, mueve el autómata, dibuja las flechas,
+   guarda el paso en el historial y acumula el símbolo
+   en "cadena". No toca el campo de texto: de eso se
+   encargan quienes llaman a esta función.
+======================================================== */
 
 
-            if (aceptada) {
+function consumirCaracter(simbolo) {
 
-                elemento.classList.remove(
-                    "active",
-                    "current"
-                );
+    if (terminado) {
 
-                elemento.classList.add(
-                    "accept"
-                );
+        mostrarAvisoTerminado();
 
-            }
+        return;
 
-            else if (
-                estado === "Q8"
-            ) {
+    }
 
-                elemento.classList.remove(
-                    "active",
-                    "current"
-                );
 
-                elemento.classList.add(
-                    "reject"
-                );
+    /* ==============================================
+       EL AUTÓMATA YA SE QUEDÓ SIN ESTADOS ACTIVOS
+    ============================================== */
 
-            }
+    if (
+        estadosActivos.length === 0
+    ) {
+
+        terminado = true;
+
+
+        document.getElementById(
+            "mensaje"
+        ).className =
+            "mensaje error";
+
+
+        document.getElementById(
+            "mensaje"
+        ).textContent =
+            "No hay estados activos: el recorrido se detuvo. " +
+            "Use Retroceder o Reiniciar.";
+
+
+        actualizarBotones();
+
+        return;
+
+    }
+
+
+    const anteriores =
+        [...estadosActivos];
+
+
+    const tipoAntes = tipoDetectado;
+
+
+    /* ==============================================
+       DETECCIÓN DEL TIPO DE ENTRADA
+
+       El símbolo que lleva de Q2 / Q3 hacia Q4 es
+       el que define si el ticket es GENERAL o VIP.
+    ============================================== */
+
+    if (
+        (
+            anteriores.includes("Q2") ||
+            anteriores.includes("Q3")
+        ) &&
+        ["v", "g", "i"].includes(simbolo)
+    ) {
+
+        tipoDetectado = simbolo;
+
+
+        mostrarTipo();
+
+    }
+
+
+    const siguientes =
+        obtenerSiguientes(
+            estadosActivos,
+            simbolo
+        );
+
+
+    document.getElementById(
+        "simboloActual"
+    ).innerHTML = `
+
+        <span class="simbolo">
+            ${simbolo}
+        </span>
+
+    `;
+
+
+    document.getElementById(
+        "pasoActual"
+    ).textContent =
+        historial.length + 1;
+
+
+    limpiarFlechas();
+
+
+    let flechasDelPaso = [];
+
+
+    for (
+        const origen
+        of anteriores
+    ) {
+
+        for (
+            const destino
+            of destinosDe(origen, simbolo)
+        ) {
+
+            activarFlecha(
+                origen,
+                destino
+            );
+
+
+            flechasDelPaso.push(
+                [origen, destino]
+            );
 
         }
+
+    }
+
+
+    /* ==============================================
+       GUARDADO DEL PASO
+
+       Se almacena una "fotografía" completa del
+       autómata antes de aplicar el símbolo, de modo
+       que el recorrido pueda deshacerse paso a paso.
+    ============================================== */
+
+    historial.push({
+
+        numero: historial.length + 1,
+
+        simbolo: simbolo,
+
+        anteriores: anteriores,
+
+        siguientes: siguientes,
+
+        flechas: flechasDelPaso,
+
+        tipoAntes: tipoAntes,
+
+        tipoDespues: tipoDetectado
+
+    });
+
+
+    /* El símbolo consumido se acumula en "cadena"
+       (esto es lo que muestra la etiqueta "Consumido"
+       y lo que permite reconstruir la ruta completa). */
+
+    cadena += simbolo;
+
+
+    estadosActivos =
+        siguientes;
+
+
+    const consumidos =
+        document.getElementById(
+            "consumidos"
+        );
+
+
+    if (consumidos) {
+
+        consumidos.textContent =
+            cadena || "—";
+
+    }
+
+
+    renderPasos();
+
+    actualizarEstados();
+
+    actualizarRutas();
+
+    actualizarBotones();
+
+
+    /* ==============================================
+       NO EXISTE TRANSICIÓN
+    ============================================== */
+
+    if (
+        siguientes.length === 0
+    ) {
+
+        terminado = true;
+
+
+        mostrarResultado(
+            false,
+            "CADENA RECHAZADA",
+            "No existe una ruta válida para continuar con el símbolo procesado."
+        );
+
+        document.getElementById(
+            "mensaje"
+        ).className =
+            "mensaje error";
+
+
+        document.getElementById(
+            "mensaje"
+        ).textContent =
+            "El autómata no tiene una transición válida.";
+
+
+        actualizarBotones();
+
+        return;
+
+    }
+
+
+    /* ==============================================
+       Q8
+    ============================================== */
+
+    if (
+        siguientes.includes("Q8")
+    ) {
+
+        terminado = true;
+
+
+        mostrarResultado(
+            false,
+            "ACCESO RECHAZADO",
+            "La ruta llegó al estado Q8."
+        );
+
+        document.getElementById(
+            "mensaje"
+        ).className =
+            "mensaje error";
+
+
+        document.getElementById(
+            "mensaje"
+        ).textContent =
+            "La ruta actual termina en rechazo.";
+
+
+        actualizarBotones();
+
+        return;
+
+    }
+
+
+    /* ==============================================
+       ESTADO DE ACEPTACIÓN (Q6 / Q7)
+
+       No hay una longitud de cadena predefinida: en
+       cuanto el recorrido llega a Q6 o Q7 se declara
+       aceptado, porque ninguno de los dos tiene
+       transiciones salientes.
+    ============================================== */
+
+    const aceptada =
+        siguientes.some(
+            estado =>
+                ESTADOS_ACEPTACION.includes(
+                    estado
+                )
+        );
+
+
+    if (aceptada) {
+
+        terminado = true;
+
+
+        const final =
+            siguientes.includes("Q6")
+                ? "Q6 (acceso GENERAL autorizado)"
+                : "Q7 (acceso VIP autorizado)";
+
+
+        mostrarResultado(
+            true,
+            "CADENA ACEPTADA",
+            "La cadena terminó en el estado de aceptación " +
+            final +
+            "."
+        );
+
+
+        document.getElementById(
+            "mensaje"
+        ).className =
+            "mensaje";
+
+
+        document.getElementById(
+            "mensaje"
+        ).textContent =
+            "La cadena fue aceptada correctamente.";
+
+
+        actualizarBotones();
+
+        return;
+
+    }
+
+
+    /* ==============================================
+       SÍMBOLO PROCESADO, EL RECORRIDO CONTINÚA
+    ============================================== */
+
+    document.getElementById(
+        "mensaje"
+    ).className =
+        "mensaje";
+
+
+    document.getElementById(
+        "mensaje"
+    ).textContent =
+        "Símbolo '" +
+        simbolo +
+        "' procesado. Escriba el siguiente símbolo.";
+
+}
+
+
+/* ========================================================
+   AVANZAR UN PASO (BOTÓN)
+
+   Toma el contenido actual del campo, se queda con el
+   primer símbolo válido, lo consume y limpia el campo.
+   Si había más de un símbolo escrito, el resto se deja
+   pendiente para el próximo clic.
+======================================================== */
+
+
+function avanzarPaso() {
+
+    const campo =
+        document.getElementById(
+            "cadena"
+        );
+
+
+    const resultado =
+        filtrarCadena(campo.value);
+
+
+    campo.value = "";
+
+
+    if (resultado.rechazados.length > 0) {
+
+        avisarSimboloInvalido(
+            resultado.rechazados
+        );
+
+    }
+
+
+    if (resultado.limpio.length === 0) {
+
+        document.getElementById(
+            "mensaje"
+        ).className =
+            "mensaje aviso";
+
+
+        document.getElementById(
+            "mensaje"
+        ).textContent =
+            "Escriba un símbolo (q, g, v, i, c, a o e) " +
+            "para avanzar un paso.";
+
+        return;
+
+    }
+
+
+    if (terminado) {
+
+        mostrarAvisoTerminado();
+
+        return;
+
+    }
+
+
+    consumirCaracter(
+        resultado.limpio[0]
+    );
+
+
+    if (resultado.limpio.length > 1) {
+
+        campo.value =
+            resultado.limpio.slice(1);
+
+    }
+
+}
+
+
+/* ========================================================
+   RETROCEDER UN PASO
+
+   Deshace el último símbolo consumido usando la
+   fotografía guardada en el historial: devuelve los
+   estados activos, el tipo detectado, la posición del
+   cursor y el símbolo al campo de entrada.
+======================================================== */
+
+
+function retrocederPaso() {
+
+    if (historial.length === 0) {
+
+        return;
+
+    }
+
+
+    const paso = historial.pop();
+
+
+    estadosActivos = paso.anteriores;
+
+    tipoDetectado = paso.tipoAntes;
+
+    terminado = false;
+
+
+    /* Se retira el último símbolo acumulado en "cadena";
+       el campo de entrada queda vacío, listo para que el
+       usuario vuelva a escribir el siguiente símbolo. */
+
+    cadena =
+        cadena.slice(0, cadena.length - 1);
+
+
+    document.getElementById(
+        "cadena"
+    ).value = "";
+
+
+    const consumidos =
+        document.getElementById("consumidos");
+
+
+    if (consumidos) {
+
+        consumidos.textContent =
+            cadena || "—";
+
+    }
+
+
+    mostrarTipo();
+
+
+    document.getElementById(
+        "pasoActual"
+    ).textContent =
+        historial.length;
+
+
+    document.getElementById(
+        "simboloActual"
+    ).innerHTML = `
+
+        <span class="simbolo">
+            ${
+                historial.length > 0
+                ? historial[historial.length - 1].simbolo
+                : "—"
+            }
+        </span>
+
+    `;
+
+
+    document.getElementById(
+        "resultado"
+    ).className =
+        "resultado";
+
+
+    document.getElementById(
+        "mensaje"
+    ).className =
+        "mensaje";
+
+
+    document.getElementById(
+        "mensaje"
+    ).textContent =
+        "Se retrocedió al paso " +
+        historial.length +
+        ". Puede continuar escribiendo el siguiente símbolo.";
+
+
+    renderPasos();
+
+    dibujarFlechasDelPaso();
+
+    actualizarEstados();
+
+    actualizarRutas();
+
+    actualizarBotones();
+
+}
+
+
+/* ========================================================
+   ETIQUETA DEL TIPO DETECTADO
+======================================================== */
+
+
+function mostrarTipo() {
+
+    const etiqueta =
+        document.getElementById("tipoDetectado");
+
+
+    if (!etiqueta) {
+
+        return;
+
+    }
+
+
+    if (tipoDetectado === "g") {
+
+        etiqueta.textContent = "GENERAL (g)";
+
+    }
+
+    else if (tipoDetectado === "v") {
+
+        etiqueta.textContent = "VIP (v)";
+
+    }
+
+    else if (tipoDetectado === "i") {
+
+        etiqueta.textContent = "INVITACIÓN (i)";
+
+    }
+
+    else {
+
+        etiqueta.textContent = "—";
+
+    }
+
+}
+
+
+/* ========================================================
+   PROCESAR (varios símbolos escritos o pegados de una vez)
+
+   Si el usuario pega varios símbolos juntos (por ejemplo
+   "qqvva"), este botón los reproduce uno por uno con una
+   breve animación, en vez de exigir que se escriban de a
+   un símbolo por vez.
+======================================================== */
+
+
+function procesarCadena() {
+
+    const campo =
+        document.getElementById(
+            "cadena"
+        );
+
+
+    const resultado =
+        filtrarCadena(campo.value);
+
+
+    campo.value = "";
+
+
+    if (resultado.rechazados.length > 0) {
+
+        avisarSimboloInvalido(
+            resultado.rechazados
+        );
+
+    }
+
+
+    if (resultado.limpio.length === 0) {
+
+        document.getElementById(
+            "mensaje"
+        ).className =
+            "mensaje aviso";
+
+
+        document.getElementById(
+            "mensaje"
+        ).textContent =
+            "Escriba al menos un símbolo para procesar.";
+
+        return;
+
+    }
+
+
+    if (terminado) {
+
+        mostrarAvisoTerminado();
+
+        return;
+
+    }
+
+
+    reproducirCola(
+        resultado.limpio.split("")
     );
 
 }
 
 
-/* =========================================================
+/* ========================================================
+   REPRODUCIR UNA COLA DE SÍMBOLOS PENDIENTES
+
+   Consume el primer símbolo de la cola y, si quedan más
+   y el recorrido no ha terminado, programa el siguiente
+   con un pequeño retraso para verlo avanzar en el grafo.
+======================================================== */
+
+
+function reproducirCola(pendientes) {
+
+    if (pendientes.length === 0) {
+
+        return;
+
+    }
+
+
+    if (terminado) {
+
+        mostrarAvisoTerminado();
+
+        return;
+
+    }
+
+
+    consumirCaracter(pendientes[0]);
+
+
+    const resto =
+        pendientes.slice(1);
+
+
+    if (
+        resto.length > 0 &&
+        !terminado
+    ) {
+
+        setTimeout(
+            function() {
+
+                reproducirCola(resto);
+
+            },
+            500
+        );
+
+    }
+
+}
+
+
+/* ========================================================
    REINICIAR
-========================================================= */
+======================================================== */
 
 
 function reiniciar(
@@ -2511,23 +3742,62 @@ function reiniciar(
 
     cadena = "";
 
-    posicion = 0;
-
     estadosActivos = ["Q0"];
 
     historial = [];
 
     tipoDetectado = null;
 
+    terminado = false;
+
+
+    const etiquetaTipo =
+        document.getElementById(
+            "tipoDetectado"
+        );
+
+
+    if (etiquetaTipo) {
+
+        etiquetaTipo.textContent = "—";
+
+    }
+
+
+    const etiquetaConsumidos =
+        document.getElementById(
+            "consumidos"
+        );
+
+
+    if (etiquetaConsumidos) {
+
+        etiquetaConsumidos.textContent = "—";
+
+    }
+
 
     document.getElementById(
         "simboloActual"
-    ).textContent = "—";
+    ).innerHTML = `
+
+        <span class="simbolo">
+            —
+        </span>
+
+    `;
 
 
     document.getElementById(
         "pasoActual"
-    ).textContent = "0";
+    ).textContent =
+        "0";
+
+
+    document.getElementById(
+        "estadosActivos"
+    ).textContent =
+        "{Q0}";
 
 
     document.getElementById(
@@ -2537,12 +3807,39 @@ function reiniciar(
 
 
     document.getElementById(
+        "mensaje"
+    ).className =
+        "mensaje";
+
+
+    document.getElementById(
+        "mensaje"
+    ).textContent =
+        "Listo para comenzar. Escriba un símbolo y el autómata avanzará automáticamente.";
+
+
+    document.getElementById(
+        "resultado"
+    ).className =
+        "resultado";
+
+
+    document.getElementById(
         "historial"
     ).innerHTML = `
 
-        <div class="empty">
-            Ingrese una cadena para comenzar la simulación.
-        </div>
+        <tr>
+
+            <td
+                colspan="5"
+                style="text-align:center;color:#90a4ae">
+
+                Ingrese una cadena
+                para comenzar.
+
+            </td>
+
+        </tr>
 
     `;
 
@@ -2551,8 +3848,11 @@ function reiniciar(
         "listaTransiciones"
     ).innerHTML = `
 
-        <div class="empty">
+        <div
+            style="text-align:center;color:#90a4ae;padding:20px">
+
             No hay transiciones todavía.
+
         </div>
 
     `;
@@ -2562,24 +3862,22 @@ function reiniciar(
         "rutas"
     ).innerHTML = `
 
-        <div class="route">
+        <div class="ruta">
             Q0
         </div>
 
     `;
 
 
-    document.getElementById(
-        "resultado"
-    ).className =
-        "result-box";
+    limpiarFlechas();
 
 
-    limpiarTransiciones();
+    renderPasos();
+
+    actualizarBotones();
 
 
     const estados = [
-
         "Q0",
         "Q1",
         "Q2",
@@ -2590,11 +3888,13 @@ function reiniciar(
         "Q7",
         "Q8",
         "Q9"
-
     ];
 
 
-    estados.forEach(function(estado) {
+    for (
+        const estado
+        of estados
+    ) {
 
         const elemento =
             document.getElementById(
@@ -2605,15 +3905,14 @@ function reiniciar(
         if (elemento) {
 
             elemento.classList.remove(
-                "active",
-                "current",
-                "accept",
-                "reject"
+                "activo",
+                "actual",
+                "rechazo"
             );
 
         }
 
-    });
+    }
 
 
     const inicial =
@@ -2625,35 +3924,210 @@ function reiniciar(
     if (inicial) {
 
         inicial.classList.add(
-            "active"
+            "actual"
         );
 
     }
 
 
-    actualizarEstados();
+    document.getElementById(
+        "validacion"
+    ).innerHTML = `
 
-    ocultarAlerta();
+        <strong>
+            Validación de entrada:
+        </strong>
+
+        La cadena no puede estar vacía.
+
+        &nbsp;&nbsp;•&nbsp;&nbsp;
+
+        Solo se permiten los símbolos:
+
+        <strong>
+            q, g, v, i, c, a, e
+        </strong>
+
+    `;
 
 }
 
 
-/* =========================================================
+/* ========================================================
    SALIR
-========================================================= */
-
+======================================================== */
 
 function salir() {
 
-    window.location.href =
-        "/logout";
+    /* Q9 = cierre del programa. Se marca el estado
+       antes de abandonar el simulador. */
+
+    estadosActivos = ["Q9"];
+
+    actualizarEstados();
+
+
+    const flecha =
+        document.getElementById("t-Q0-Q9");
+
+
+    if (flecha) {
+
+        flecha.classList.add("activa");
+
+    }
+
+
+    setTimeout(
+        function() {
+
+            window.location.href = "/";
+
+        },
+        450
+    );
 
 }
 
 
-/* =========================================================
+/* ========================================================
    ENTER
-========================================================= */
+======================================================== */
+
+
+/* ========================================================
+   RECHAZO DE SÍMBOLOS FUERA DEL ALFABETO
+
+   Cualquier carácter que no pertenezca a
+   Σ = {q, g, v, i, c, a, e} se elimina del campo
+   en el momento de escribirlo o pegarlo.
+======================================================== */
+
+
+function avisarSimboloInvalido(simbolos) {
+
+    const campo =
+        document.getElementById(
+            "cadena"
+        );
+
+
+    const texto =
+        document.getElementById(
+            "validacion"
+        );
+
+
+    if (texto) {
+
+        texto.innerHTML =
+            "<strong>Validación de entrada:</strong> " +
+            "Símbolo rechazado: <b>" +
+            simbolos.join(", ") +
+            "</b>. Solo se permiten: " +
+            "<strong>q, g, v, i, c, a, e</strong>.";
+
+    }
+
+
+    if (campo) {
+
+        campo.classList.add("invalido");
+
+
+        setTimeout(
+            function() {
+
+                campo.classList.remove("invalido");
+
+            },
+            400
+        );
+
+    }
+
+}
+
+
+document.getElementById(
+    "cadena"
+).addEventListener(
+    "input",
+    function() {
+
+        const resultado =
+            filtrarCadena(this.value);
+
+
+        /* ==========================================
+           SOLO SE FILTRA, NO SE CONSUME TODAVÍA
+
+           El campo se limpia de símbolos inválidos,
+           pero el (los) símbolo(s) válido(s) se dejan
+           escritos a la espera de que el usuario
+           presione "Avanzar paso" (o Enter / Procesar)
+           para que el autómata los consuma. Así el
+           botón de paso a paso siempre tiene algo que
+           procesar cuando se le hace clic.
+        ========================================== */
+
+        this.value =
+            resultado.limpio;
+
+
+        if (resultado.rechazados.length > 0) {
+
+            avisarSimboloInvalido(
+                resultado.rechazados
+            );
+
+        }
+
+        else if (resultado.limpio.length > 0) {
+
+            const texto =
+                document.getElementById(
+                    "validacion"
+                );
+
+
+            if (texto) {
+
+                texto.innerHTML =
+                    "<strong>Validación de entrada:</strong> " +
+                    "Símbolo válido. Presione " +
+                    "<b>Avanzar paso</b> (o Enter) para procesarlo.";
+
+            }
+
+        }
+
+    }
+);
+
+
+document.getElementById(
+    "cadena"
+).addEventListener(
+    "keypress",
+    function(event) {
+
+        if (
+            event.key.length === 1 &&
+            event.key !== "Enter" &&
+            !ALFABETO.includes(
+                event.key.toLowerCase()
+            )
+        ) {
+
+            event.preventDefault();
+
+            avisarSimboloInvalido([event.key]);
+
+        }
+
+    }
+);
 
 
 document.getElementById(
@@ -2662,7 +4136,9 @@ document.getElementById(
     "keydown",
     function(event) {
 
-        if (event.key === "Enter") {
+        if (
+            event.key === "Enter"
+        ) {
 
             procesarCadena();
 
@@ -2672,9 +4148,9 @@ document.getElementById(
 );
 
 
-/* =========================================================
-   INICIAR
-========================================================= */
+/* ========================================================
+   INICIO
+======================================================== */
 
 
 document.addEventListener(
@@ -2686,9 +4162,10 @@ document.addEventListener(
     }
 );
 
+
 </script>
+
 
 </body>
 
 </html>
-```
