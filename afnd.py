@@ -107,9 +107,12 @@ class AFND:
                 self.q5 = True
                 self.tipo_detectado = simbolo  # se reemplaza 'i' por el tipo real confirmado (g o v)
                 self.pasos.append(f"'{simbolo}' -> Q5 (confirmación de tipo correcta, verificando autorización)")
-            else:
+            else:                
                 self.q8 = True
-                self.pasos.append(f"'{simbolo}' -> Q8 (FRAUDE: confirmación '{simbolo}' no coincide con la detección inicial '{self.tipo_detectado}')")
+                if simbolo == "i":
+                    self.pasos.append(f"'{simbolo}' -> Q8 (ERROR: Se repite el símbolo'{simbolo}', pero nunca se confirma de qué tipo es '{self.tipo_detectado}')")
+                else:
+                    self.pasos.append(f"'{simbolo}' -> Q8 (FRAUDE: confirmación '{simbolo}' no coincide con la detección inicial '{self.tipo_detectado}')")
 
         elif self.q5 and simbolo == "a" and self.tipo_detectado == "g":
             self.q6 = True
