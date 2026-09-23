@@ -2424,8 +2424,7 @@ function destinosDe(estado, simbolo) {
 
 
         if (
-            tipoDetectado === "v" ||
-            tipoDetectado === "i"
+            tipoDetectado === "v"
         ) {
 
             return ["Q7"];
@@ -3123,6 +3122,34 @@ function consumirCaracter(simbolo) {
 
 
         mostrarTipo();
+
+    }
+        /* ==============================================
+       CONFIRMACIÓN DEL TIPO DE ENTRADA
+
+       Si la confirmación es válida, el símbolo
+       confirmado REEMPLAZA a 'i' (o se reafirma a sí
+       mismo si era g/v). Así, la resolución de Q6/Q7
+       en destinosDe() no necesita saber nada de 'i'.
+    ============================================== */
+
+    if (
+        anteriores.includes("Q4") &&
+        ["v", "g", "i"].includes(simbolo)
+    ) {
+
+        const confirmacionValida =
+            tipoAntes === "i"
+                ? ["g", "v"].includes(simbolo)
+                : simbolo === tipoAntes;
+
+        if (confirmacionValida) {
+
+            tipoDetectado = simbolo;
+
+            mostrarTipo();
+
+        }
 
     }
 

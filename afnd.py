@@ -95,19 +95,30 @@ class AFND:
             self.tipo_detectado = simbolo
             self.pasos.append(f"'{simbolo}' -> Q4 (verificando tipo de entrada)")
  
-        elif self.q4 and not self.q5 and (simbolo in "vg" if self.self.tipo_detectado == "i" else simbolo == self.self.tipo_detectado):
-            if simbolo == self.tipo_detectado:
-                self.q5 = True
-                self.pasos.append(f"'{simbolo}' -> Q5 (confirmación de tipo correcta, verificando autorización)")
+        elif self.q4 and not self.q5 and simbolo in "vgi":
+            # Excepción: una invitación ('i') no se confirma repitiendo 'i',
+            # sino con el tipo real de acceso que la invitación otorga (g o v).
+            if self.tipo_detectado == "i":
+                confirmacion_valida = simbolo in ("g", "v")
+            else:
+                confirmacion_valida = simbolo == self.tipo_detectado
 
+            if confirmacion_valida:
+                self.q5 = True
+                self.tipo_detectado = simbolo  # se reemplaza 'i' por el tipo real confirmado (g o v)
+                self.pasos.append(f"'{simbolo}' -> Q5 (confirmación de tipo correcta, verificando autorización)")
             else:
                 self.q8 = True
                 self.pasos.append(f"'{simbolo}' -> Q8 (FRAUDE: confirmación '{simbolo}' no coincide con la detección inicial '{self.tipo_detectado}')")
- 
-        elif self.q5 and simbolo == "a" and self.tipo_detectado in ("v", "i"):
+
+        elif self.q5 and simbolo == "a" and self.tipo_detectado == "g":
+            self.q6 = True
+            self.pasos.append(f"'{simbolo}' -> Q6 (acceso GENERAL autorizado)")
+
+        elif self.q5 and simbolo == "a" and self.tipo_detectado == "v":
             self.q7 = True
             self.pasos.append(f"'{simbolo}' -> Q7 (acceso VIP autorizado)")
- 
+
         elif simbolo == "e":
             self.q8 = True
             self.pasos.append(f"'{simbolo}' -> Q8 (acceso rechazado)")
