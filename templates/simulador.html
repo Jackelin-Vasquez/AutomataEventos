@@ -2375,6 +2375,30 @@ function destinosDe(estado, simbolo) {
     let destinos =
         TRANSICIONES[estado][simbolo];
 
+/* ==============================================
+       CONFIRMACIÓN DE TIPO EN Q4 (anti-fraude)
+
+       El segundo símbolo (v/g/i) debe coincidir con
+       el detectado al entrar a Q4. Si no coincide,
+       se interpreta como fraude y va a Q8.
+    ============================================== */
+
+    if (
+        estado === "Q4" &&
+        ["v", "g", "i"].includes(simbolo)
+    ) {
+
+        const confirmacionValida =
+        tipoDetectado === "i"
+            ? ["g", "v"].includes(simbolo)
+            : simbolo === tipoDetectado;
+
+        return confirmacionValida
+            ? ["Q5"]
+            : ["Q8"];
+
+    }
+
 
     /* ==============================================
        RESOLUCIÓN DEL NO DETERMINISMO EN Q5
@@ -3265,12 +3289,28 @@ function consumirCaracter(simbolo) {
 
         terminado = true;
 
+        const esFraude =
+        anteriores.includes("Q4") &&
+        ["v", "g", "i"].includes(simbolo) &&
+        (
+        tipoAntes === "i"
+            ? !["g", "v"].includes(simbolo)
+            : simbolo !== tipoAntes
+        );
+
+
+    if (esFraude) {
 
         mostrarResultado(
             false,
-            "ACCESO RECHAZADO",
-            "La ruta llegó al estado Q8."
+            "FRAUDE DETECTADO",
+            "El símbolo de confirmación '" +
+            simbolo +
+            "' no coincide con el tipo detectado ('" +
+            tipoAntes +
+            "'). Posible intento de fraude."
         );
+
 
         document.getElementById(
             "mensaje"
@@ -3281,11 +3321,31 @@ function consumirCaracter(simbolo) {
         document.getElementById(
             "mensaje"
         ).textContent =
-            "La ruta actual termina en rechazo.";
+            "Fraude detectado: la confirmación no coincide con la detección inicial.";
 
+    }
+
+    else {
+            mostrarResultado(
+                false,
+                "ACCESO RECHAZADO",
+                "La ruta llegó al estado Q8."
+            );
+
+            document.getElementById(
+                "mensaje"
+            ).className =
+                "mensaje error";
+
+
+            document.getElementById(
+                "mensaje"
+            ).textContent =
+                "La ruta actual termina en rechazo.";
+        }
 
         actualizarBotones();
-
+    
         return;
 
     }

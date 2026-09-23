@@ -95,13 +95,14 @@ class AFND:
             self.tipo_detectado = simbolo
             self.pasos.append(f"'{simbolo}' -> Q4 (verificando tipo de entrada)")
  
-        elif self.q4 and not self.q5 and simbolo in "vgi":
-            self.q5 = True
-            self.pasos.append(f"'{simbolo}' -> Q5 (verificando autorización)")
- 
-        elif self.q5 and simbolo == "a" and self.tipo_detectado == "g":
-            self.q6 = True
-            self.pasos.append(f"'{simbolo}' -> Q6 (acceso GENERAL autorizado)")
+        elif self.q4 and not self.q5 and (simbolo in "vg" if self.self.tipo_detectado == "i" else simbolo == self.self.tipo_detectado):
+            if simbolo == self.tipo_detectado:
+                self.q5 = True
+                self.pasos.append(f"'{simbolo}' -> Q5 (confirmación de tipo correcta, verificando autorización)")
+
+            else:
+                self.q8 = True
+                self.pasos.append(f"'{simbolo}' -> Q8 (FRAUDE: confirmación '{simbolo}' no coincide con la detección inicial '{self.tipo_detectado}')")
  
         elif self.q5 and simbolo == "a" and self.tipo_detectado in ("v", "i"):
             self.q7 = True
